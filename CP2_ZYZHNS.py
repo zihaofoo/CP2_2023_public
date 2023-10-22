@@ -19,8 +19,8 @@ def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
     ax.legend(loc = 'lower right')
     ax.text(x = 0, y = 1, s = r"Training R^{2}: " + np.str_(r2_score(ratings_train, preds_train)))
     ax.text(x = 0, y = 0.95, s = r"Testing R^{2}: " + np.str_(r2_score(ratings_test, preds_test)))
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
+    current_datetime = datetime.now()
+    current_time = current_datetime.strftime("%Y-%m-%d-%H-%M-%S")
     fig.savefig('Prediction' + np.str_(i) + '_' + current_time + '.pdf')
     # plt.show()
     print(f"Train Set R2 score: {r2_score(ratings_train, preds_train)}") #Calculate R2 score
@@ -28,7 +28,6 @@ def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
 
 def get_predictions(grids, ratings, predictor):
     """ Function to predict advisor score using a trained predictor."""
-    grids = grids.reshape(grids.shape[0], 49)
     grids_df = pd.DataFrame(grids, columns = range(grids.shape[1]))
     predictions = predictor.predict(grids_df).values
     mask = np.where(~np.isnan(ratings))
@@ -95,7 +94,6 @@ def get_features(grids_subset, freq = []):
         mask_3 = np.argwhere(grids_subset[i1] == 3)
         mask_4 = np.argwhere(grids_subset[i1] == 4)
         
-        
         feat_out[i1, 0 * freq_length : 1 * freq_length ] = get_pairwise_dist(mask_0, mask_0, freq) / 2
         feat_out[i1, 1 * freq_length : 2 * freq_length ] = get_pairwise_dist(mask_0, mask_1, freq)
         feat_out[i1, 2 * freq_length : 3 * freq_length ] = get_pairwise_dist(mask_0, mask_2, freq)
@@ -111,11 +109,13 @@ def get_features(grids_subset, freq = []):
         feat_out[i1, 12 * freq_length : 13 * freq_length ] = get_pairwise_dist(mask_3, mask_3, freq) / 2
         feat_out[i1, 13 * freq_length : 14 * freq_length ] = get_pairwise_dist(mask_3, mask_4, freq)
         feat_out[i1, 14 * freq_length : 15 * freq_length ] = get_pairwise_dist(mask_4, mask_4, freq) / 2
-
     return feat_out
 
 def fit_plot_predict_zyzh(grids, ratings, i):
-    """ Function to implement autoML to correlate test data and labels, for a given advisor i"""
+    """ 
+    Function to implement autoML to correlate test data and labels, for a given advisor i
+    Returns the Prediction (model y-values) and the Predictor (Trained Model)
+    """
     grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,i]) # gets subset of the dataset rated by advisor i
 
     ## Feature transformation 
@@ -125,7 +125,7 @@ def fit_plot_predict_zyzh(grids, ratings, i):
             freq.append((k1 + 1)**2 + (k2)**2)
     freq = np.unique(np.array(freq))
     feats = get_features(grids_subset, freq)
-
+    
     feats_train, feats_test, ratings_train, ratings_test = train_test_split(feats, ratings_subset)
     feats_train = pd.DataFrame(feats_train, columns = range(feats.shape[1]), dtype = "object") # specify dtype of object to ensure categorical handling of data
     feats_test = pd.DataFrame(feats_test, columns = range(feats.shape[1]), dtype = "object")
@@ -137,7 +137,9 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     preds_test = predictor.predict(feats_test)
     preds_train = predictor.predict(feats_train)
     plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i)
-    predictions = get_predictions(grids, ratings[:,i], predictor)
+
+    feats_all = np.loadtxt('feats.csv', delimiter = ',')
+    predictions = get_predictions(feats_all, ratings[:,i], predictor)
     return predictions, predictor
 
 ## Implementing ML model 
@@ -149,7 +151,7 @@ ratings_df = pd.DataFrame(ratings, columns = score_order)       # Create a dataf
 all_predictions = []
 all_predictors = []
 
-for i in range(3,4):
+for i in range(0,4):
     predictions, predictor = fit_plot_predict_zyzh(grids, ratings, i)
     all_predictions.append(predictions)
     all_predictors.append(predictor)
