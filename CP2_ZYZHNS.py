@@ -184,12 +184,23 @@ def get_features_sqdist(grids_subset, freq = []):
  
     return feat_out
 
+def get_feats_all(grids, freq = []):
+    if len(freq) == 0:
+        freq = [0]
+        for k1 in range(6):
+            for k2 in range(7):
+                freq.append((k1 + 1)**2 + (k2)**2)
+        freq = np.unique(np.array(freq))
+    feats_all = get_features_sqdist(grids, freq)
+    np.savetxt(X = feats_all, fname = 'feats.csv', delimiter = ',')
+
 def fit_plot_predict_zyzh(grids, ratings, i):
     """ 
     Function to implement autoML to correlate test data and labels, for a given advisor i
     Returns the Prediction (model y-values) and the Predictor (Trained Model)
     """
     grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,i]) # gets subset of the dataset rated by advisor i
+    
 
     ## Feature transformation 
     freq = [0]
@@ -197,6 +208,8 @@ def fit_plot_predict_zyzh(grids, ratings, i):
         for k2 in range(7):
             freq.append((k1 + 1)**2 + (k2)**2)
     freq = np.unique(np.array(freq))
+
+    # get_feats_all(grids, freq)            # Code to generate feats_all
     feats = get_features_sqdist(grids_subset, freq)
     feats_train, feats_test, ratings_train, ratings_test = train_test_split(feats, ratings_subset)
     feats_train = pd.DataFrame(feats_train, columns = range(feats.shape[1]), dtype = "object") # specify dtype of object to ensure categorical handling of data
@@ -204,7 +217,7 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     preds_train = pd.DataFrame(ratings_train, columns = ["ratings"])
     all_train = pd.concat([feats_train, preds_train], axis=1)
 
-    predictor = TabularPredictor(label="ratings").fit(all_train, hyperparameters = {'NN_TORCH':{'num_epochs': 100, 'weight_decay': 1e-4}, 'XGB':{'reg_lambda': 0.1}, 'RF':{}, 'XT':{}, 'CAT':{'l2_leaf_reg': 3.0}})
+    predictor = TabularPredictor(label="ratings", sample_weight = 'auto_weight', eval_metric = 'r2').fit(all_train, hyperparameters = {'NN_TORCH':{'weight_decay': 1e-4}, 'XGB':{'reg_lambda': 0.1}, 'RF':{}, 'XT':{}, 'CAT':{'l2_leaf_reg': 3.0}})
 
     preds_test = predictor.predict(feats_test)
     preds_train = predictor.predict(feats_train)
@@ -227,4 +240,16 @@ for i in range(0,4):
     predictions, predictor = fit_plot_predict_zyzh(grids, ratings, i)
     all_predictions.append(predictions)
     all_predictors.append(predictor)
+
+final_prediction_array = np.stack(all_predictions).T
+min_predictions = np.min(final_prediction_array, axis = 1)
+top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
+final_submission = grids[top_100_indices].astype(int)
+
+assert final_submission.shape == (100, 7, 7)
+assert final_submission.dtype == int
+assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
+id = np.random.randint(1e8, 1e9-1)
+np.save(f"{id}.npy", final_submission)
+
 
