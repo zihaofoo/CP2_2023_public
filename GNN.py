@@ -91,9 +91,9 @@ ratings_df = pd.DataFrame(ratings, columns = score_order)       # Create a dataf
 for i1 in range(1):
     grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,i1]) # gets subset of the dataset rated by advisor i
     grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2)
-    grids_train_tensor = torch.tensor(grids_train.reshape(len(grids_train), -1), dtype = torch.float32)
-    ratings_train_tensor = torch.tensor(ratings_train, dtype = torch.float32).unsqueeze(-1) # Add extra dimension
-    adjacency_tensor = torch.tensor(adjacency_matrix, dtype = torch.float32)
+    grids_train_tensor = torch.tensor(grids_train.reshape(len(grids_train), -1), dtype = torch.float64)
+    ratings_train_tensor = torch.tensor(ratings_train, dtype = torch.float64).unsqueeze(-1) # Add extra dimension
+    adjacency_tensor = torch.tensor(adjacency_matrix, dtype = torch.float64)
     
     criterion = nn.MSELoss()
     optimizer = torch.optim.Adam(GNNmodel.parameters(), lr = 0.01)
