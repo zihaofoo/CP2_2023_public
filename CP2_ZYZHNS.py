@@ -194,6 +194,145 @@ def get_feats_all(grids, freq = []):
     feats_all = get_features_sqdist(grids, freq)
     np.savetxt(X = feats_all, fname = 'feats.csv', delimiter = ',')
 
+def compute_features(grids, advisor):
+    num_layers = grids.shape[0]
+    feature_all = np.zeros((num_layers,70))
+    for i1 in range(num_layers):
+        grid = grids[i1,:,:]
+        features = []
+        grid = grid.astype(int)
+        # Number of each type
+        counts = np.bincount(grid.flatten(), minlength=5)
+        features.extend(counts)
+
+        inter_adjacency = np.zeros((5, 5), dtype=int)
+
+        for i in range(7):
+            for j in range(7):
+                current_val = grid[i, j]
+                for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+                    if 0 <= i+dx < 7 and 0 <= j+dy < 7:
+                        neighbor_val = grid[i+dx, j+dy]
+                        # Only update the upper diagonal (including main diagonal)
+                        if current_val <= neighbor_val:
+                            inter_adjacency[current_val, neighbor_val] += 1
+
+        features.extend(inter_adjacency[np.triu_indices(5, k=0)])
+
+        # Create a dictionary to store distances for each unique class pair
+        distances = {(i, j): [] for i in range(5) for j in range(i, 5)}
+
+        # Compute distances for each pair of cells
+        for i in range(7):
+            for j in range(7):
+                for m in range(7):
+                    for n in range(7):
+                        d = np.sqrt((i - m) ** 2 + (j - n) ** 2)
+                        class_pair = tuple(sorted([grid[i, j], grid[m, n]]))
+                        distances[class_pair].append(d)
+
+        # Compute statistics for each class pair and store in a flattened list
+        flattened_stats = []
+        # for key, values in distances.items():
+        #     mean_val = np.mean(values)
+        #     var_val = np.var(values)
+        #     # skew_val = skew(values)
+        #     # kurt_val = kurtosis(values)
+        #     # flattened_stats.extend([mean_val, var_val, skew_val, kurt_val])        
+        #     flattened_stats.extend([mean_val, var_val])
+        # features.extend(flattened_stats)
+
+        for key, values in distances.items():
+            if values:  # Check if the list is not empty
+                try:
+                    mean_val = np.mean(values)
+                    var_val = np.var(values)
+                except:
+                    mean_val = 0  # or any default value
+                    var_val = 0  # or any default value
+                flattened_stats.extend([mean_val, var_val])
+            else:  # Handle the case where the list is empty
+                flattened_stats.extend([0, 0])  # or any default value
+
+        if advisor == 0:
+            " Wellness advisor is focused on the health and wellbeing (both physical and mental) of citizens"
+            " They are very invested in the quality and accessibility of city's green spaces."
+            # Distance of park zones from each grid element
+            distance_matrix = compute_distance_to_class(grid, target_class = 3)
+            features.extend(distance_matrix)
+            # Number of connected parks
+            connections = count_connected_for_class(grid, target_class= 3)
+            features.extend([connections])
+
+        if advisor == 2:
+            " Transportation advisor places an emphasis on accessibility and emissions. "
+            " They are focused on mimizing the distance over which the workforce needs to commute."
+            for cls in [0, 1, 2, 4]:
+
+                # obtains the minimum and max distance between residential areas and three others
+                # max_min = compute_max_min_distance(grid, class_type_1 = 0, class_type_2 = cls)
+                # features.extend(max_min)
+                # obtains distance to nearest residential
+                distance_matrix = compute_distance_to_class(grid, target_class = cls)
+                features.extend(distance_matrix)
+
+                # could possibly add proximity of houses at the centre
+                # find whether the orientation matters
+        features = np.array(features)
+        feature_all[i1,:] = features
+    return feature_all
+
+def count_connected_for_class(grid, target_class):
+    height, width = grid.shape
+    count = 0
+
+    for i in range(height):
+        for j in range(width):
+            if grid[i][j] == target_class:
+                # Check bottom neighbor
+                if i + 1 < height and grid[i+1][j] == target_class:
+                    count += 1
+
+                # Check right neighbor
+                if j + 1 < width and grid[i][j+1] == target_class:
+                    count += 1
+
+    return count
+
+def compute_distance_to_class(grid, target_class):
+    # Find the positions of the target class
+    positions_target_class = np.argwhere(grid == target_class)
+    
+    # Initialize a distance matrix with large values
+    distance_matrix = np.full(grid.shape, np.inf)
+    
+    for i in range(7):
+        for j in range(7):
+            for pos in positions_target_class:
+                distance = np.linalg.norm(np.array([i, j]) - pos)
+                distance_matrix[i, j] = min(distance_matrix[i, j], distance)
+    
+    return distance_matrix.flatten()
+
+def compute_max_min_distance(grid, class_type_1, class_type_2):
+    # Find the positions of the two class types
+    positions_type_1 = np.argwhere(grid == class_type_1)
+    positions_type_2 = np.argwhere(grid == class_type_2)
+
+    # If either class type is not found in the grid, return None for min and max distances
+    if len(positions_type_1) == 0 or len(positions_type_2) == 0:
+        return None, None
+
+    # Calculate all pairwise distances between the two sets of positions
+    distances = []
+    for pos1 in positions_type_1:
+        for pos2 in positions_type_2:
+            distance = np.linalg.norm(pos1 - pos2)
+            distances.append(distance)
+
+    # Return the minimum and maximum of the calculated distances
+    return [float(min(distances)), float(max(distances))]
+
 def fit_plot_predict_zyzh(grids, ratings, i):
     """ 
     Function to implement autoML to correlate test data and labels, for a given advisor i
@@ -201,7 +340,6 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     """
     grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,i]) # gets subset of the dataset rated by advisor i
     
-
     ## Feature transformation 
     freq = [0]
     for k1 in range(6):
@@ -209,8 +347,8 @@ def fit_plot_predict_zyzh(grids, ratings, i):
             freq.append((k1 + 1)**2 + (k2)**2)
     freq = np.unique(np.array(freq))
 
-    # get_feats_all(grids, freq)            # Code to generate feats_all
-    feats = get_features_sqdist(grids_subset, freq)
+    # get_feats_all(grids, freq)            # Code to generate feats_all for old ZY-ZH features
+    feats = compute_features(grids_subset, i)
     feats_train, feats_test, ratings_train, ratings_test = train_test_split(feats, ratings_subset)
     feats_train = pd.DataFrame(feats_train, columns = range(feats.shape[1]), dtype = "object") # specify dtype of object to ensure categorical handling of data
     feats_test = pd.DataFrame(feats_test, columns = range(feats.shape[1]), dtype = "object")
@@ -222,9 +360,9 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     preds_test = predictor.predict(feats_test)
     preds_train = predictor.predict(feats_train)
     plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i)
-
-    feats_all = np.loadtxt('feats.csv', delimiter = ',')
-    predictions = get_predictions(feats_all, ratings[:,i], predictor)
+    feats_all = compute_features(grids, i)
+    # feats_all = np.loadtxt('feats.csv', delimiter = ',')      # For old ZY-ZH features
+    # predictions = get_predictions(feats_all, ratings[:,i], predictor)
     return predictions, predictor
 
 ## Implementing ML model 
