@@ -196,7 +196,7 @@ def get_feats_all(grids, freq = []):
 
 def compute_features(grids, advisor):
     num_layers = grids.shape[0]
-    feature_all = np.zeros((num_layers,70))
+    feature_all = np.zeros((num_layers, 216))
     for i1 in range(num_layers):
         grid = grids[i1,:,:]
         features = []
@@ -374,7 +374,7 @@ ratings_df = pd.DataFrame(ratings, columns = score_order)       # Create a dataf
 all_predictions = []
 all_predictors = []
 
-for i in range(0,4):
+for i in range(2,3):
     predictions, predictor = fit_plot_predict_zyzh(grids, ratings, i)
     all_predictions.append(predictions)
     all_predictors.append(predictor)
