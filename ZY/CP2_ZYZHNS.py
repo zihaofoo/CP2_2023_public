@@ -10,7 +10,7 @@ import random
 from scipy.spatial import distance
 from CP2_sub import *
 
-
+np.random.seed(42)
 ## Implementing ML model 
 grids = load_grids()                                            # Helper function we have provided to load the grids from the dataset
 ratings = np.load("datasets/scores.npy")                        # Load advisor scores
