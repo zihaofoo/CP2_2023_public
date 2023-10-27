@@ -198,7 +198,7 @@ def get_feats_all(grids, freq = []):
 
 def compute_features(grids, advisor):
     num_layers = grids.shape[0]
-    feature_all = np.zeros((num_layers, 285))
+    feature_all = np.zeros((num_layers,280))
     for i1 in range(num_layers):
         grid = grids[i1,:,:]
         features = []
@@ -285,14 +285,12 @@ def compute_features(grids, advisor):
 
                 ## largest_cluster_size = find_largest_cluster(grid, cls)
                 ## features.append(largest_cluster_size)
-
-        # Find the largest clusters
-        for k1 in range(5):
-            num_classes = k1
+            # Find the largest clusters
             largest_sizes, centroid_dict = find_largest_clusters(grid, num_classes)
             
             # Create a list to store centroid tuples
             centroid_list = [centroid_dict[cls] for cls in range(num_classes)]
+        
             
             # Append the largest cluster sizes
             features.extend(largest_sizes)
@@ -436,21 +434,19 @@ def dfs(grid, row, col, target, visited):
         size = 1
         centroid_x, centroid_y = row, col
         # include diagonal as cluster
-        for dr in [-1, 0, 1]:
-            for dc in [-1, 0, 1]:
-                size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
-                size += size_delta
-                centroid_x += centroid_delta[0]
-                centroid_y += centroid_delta[1]
+        # for dr in [-1, 0, 1]:
+        #     for dc in [-1, 0, 1]:
+        #         size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
+        #         size += size_delta
+        #         centroid_x += centroid_delta[0]
+        #         centroid_y += centroid_delta[1]
         # Explore only adjacent cells (up, down, left, and right)
-        # directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        # for dr, dc in directions:
-        #     size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
-        #     size += size_delta
-        #     centroid_x += centroid_delta[0]
-        #     centroid_y += centroid_delta[1]
-        # centroid_x = centroid_x / size
-        # centroid_y = centroid_y / size
+        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        for dr, dc in directions:
+            size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
+            size += size_delta
+            centroid_x += centroid_delta[0]
+            centroid_y += centroid_delta[1]
 
 
         return size, (centroid_x / size, centroid_y / size)

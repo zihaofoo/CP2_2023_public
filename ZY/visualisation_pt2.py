@@ -16,7 +16,7 @@ difference = prediction - ground_truth
 
 # What I want to see 
 # Mask the differences where ground truth > 0.85
-mask = ground_truth < 0.3
+mask = ground_truth > 0.85
 filtered_differences = difference[mask]
 filtered_ground_truth = ground_truth[mask]
 filtered_prediction = prediction[mask]
