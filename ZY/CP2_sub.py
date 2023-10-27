@@ -198,7 +198,7 @@ def get_feats_all(grids, freq = []):
 
 def compute_features(grids, advisor):
     num_layers = grids.shape[0]
-    feature_all = np.zeros((num_layers,280))
+    feature_all = np.zeros((num_layers,285))
     for i1 in range(num_layers):
         grid = grids[i1,:,:]
         features = []
@@ -279,7 +279,9 @@ def compute_features(grids, advisor):
                 # obtains distance to nearest residential
                 distance_matrix = compute_distance_to_class(grid, target_class = cls)
                 features.extend(distance_matrix)
-
+                # calculate clusters above a min size
+                cluster_count = count_clusters_above_size(grid, cls, min_size = 4)
+                features.append(cluster_count)
                 # could possibly add proximity of houses at the centre
                 # find whether the orientation matters 
 
@@ -303,6 +305,8 @@ def compute_features(grids, advisor):
             
             # Append centroid distances to features
             features.extend(centroid_distances)
+
+
                
         features = np.array(features)
         feature_all[i1,:] = features
@@ -384,7 +388,7 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     all_train = pd.concat([feats_train, preds_train], axis=1)
 
     # predictor = TabularPredictor(label="ratings", sample_weight = 'auto_weight', eval_metric = 'r2').fit(all_train, hyperparameters = {'NN_TORCH':{'weight_decay': 1e-4}, 'XGB':{'reg_lambda': 0.1}, 'RF':{}, 'XT':{}, 'CAT':{'l2_leaf_reg': 3.0}})
-    predictor = TabularPredictor(label="ratings", sample_weight = 'auto_weight', eval_metric = 'r2').fit(all_train, hyperparameters = {'NN_TORCH':{'weight_decay': 1e-4}, 'XGB':{'reg_lambda': 0.1}, 'RF':{}, 'XT':{}, 'CAT':{'l2_leaf_reg': 3.0}})
+    predictor = TabularPredictor(label="ratings", sample_weight = 'auto_weight', eval_metric = 'r2').fit(all_train, hyperparameters = {'NN_TORCH':{'weight_decay': 1e-4}, 'XGB':{'reg_lambda': 0.1}, 'RF':{}, 'XT':{}})
     
 
 
@@ -419,6 +423,7 @@ def find_largest_clusters(grid, num_classes):
 
         largest_cluster_sizes[target_value] = largest_cluster_size
         centroids[target_value] = largest_cluster_centroid
+        
 
     return largest_cluster_sizes, centroids
 
@@ -434,22 +439,51 @@ def dfs(grid, row, col, target, visited):
         size = 1
         centroid_x, centroid_y = row, col
         # include diagonal as cluster
-        # for dr in [-1, 0, 1]:
-        #     for dc in [-1, 0, 1]:
-        #         size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
-        #         size += size_delta
-        #         centroid_x += centroid_delta[0]
-        #         centroid_y += centroid_delta[1]
+        for dr in [-1, 0, 1]:
+            for dc in [-1, 0, 1]:
+                size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
+                size += size_delta
+                centroid_x += centroid_delta[0]
+                centroid_y += centroid_delta[1]
         # Explore only adjacent cells (up, down, left, and right)
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-        for dr, dc in directions:
-            size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
-            size += size_delta
-            centroid_x += centroid_delta[0]
-            centroid_y += centroid_delta[1]
+        # directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        # for dr, dc in directions:
+        #     size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
+        #     size += size_delta
+        #     centroid_x += centroid_delta[0]
+        #     centroid_y += centroid_delta[1]
+        centroid_x = centroid_x / size
+        centroid_y = centroid_y / size
 
 
-        return size, (centroid_x / size, centroid_y / size)
+
+        return size, (centroid_x, centroid_y)
 
     return 0, (0, 0)
+
+def count_clusters_above_size(grid, target_value, min_size):
+    def dfs2(row, col):
+        if (
+            row < 0
+            or col < 0
+            or row >= len(grid)
+            or col >= len(grid[0])
+            or grid[row][col] != target_value
+        ):
+            return 0
+        count = 1
+        grid[row][col] = -1  # Mark the cell as visited
+        for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            count += dfs2(row + dr, col + dc)
+        return count
+
+    cluster_count = 0
+    for row in range(len(grid)):
+        for col in range(len(grid[0])):
+            if grid[row][col] == target_value:
+                cluster_size = dfs2(row, col)
+                if cluster_size >= min_size:
+                    cluster_count += 1
+
+    return cluster_count
     
