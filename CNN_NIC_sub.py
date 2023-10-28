@@ -123,21 +123,21 @@ def compute_features(grid, advisor):
             features.extend(distance_matrix)
 
         # could possibly add proximity of houses at the centre
-        # num_classes = 5
-        # centroid_list = np.zeros(num_classes)   
-        # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
-        # # Create a list to store centroid tuples
-        # centroid_list = [centroid_dict[cls] for cls in range(num_classes)] 
-        # # Perform element-wise division and set to NaN where division by zero occurs
-        # for i in range(len(centroid_list)):
-        #     for j in range(len(centroid_list)):
-        #         if largest_sizes[i] != 0:
-        #             centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
-        #         else:
-        #             centroid_list[i] = (np.nan, np.nan)
-        #  
-        # # Append the largest cluster sizes
-        # features.extend(largest_sizes)
+        num_classes = 5
+        centroid_list = np.zeros(num_classes)   
+        largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
+        # Create a list to store centroid tuples
+        centroid_list = [centroid_dict[cls] for cls in range(num_classes)] 
+        # Perform element-wise division and set to NaN where division by zero occurs
+        for i in range(len(centroid_list)):
+            for j in range(len(centroid_list)):
+                if largest_sizes[i] != 0:
+                    centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
+                else:
+                    centroid_list[i] = (np.nan, np.nan)
+         
+        # Append the largest cluster sizes
+        features.extend(largest_sizes)
 
         # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
         # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
