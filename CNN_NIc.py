@@ -27,10 +27,10 @@ grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,advisor_val]
 grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = 42)
 
 rotated_array1 = rotate(grids_train, angle=90, axes=(1,2), reshape=True)
-rotated_array2 = rotate(grids_train, angle=180, axes=(1,2), reshape=True)
-rotated_array3 = rotate(grids_train, angle=270, axes=(1,2), reshape=True)
-grids_train = np.vstack((grids_train, rotated_array1, rotated_array2, rotated_array3))
-ratings_train = np.concatenate((ratings_train, ratings_train, ratings_train, ratings_train))
+# rotated_array2 = rotate(grids_train, angle=180, axes=(1,2), reshape=True)
+# rotated_array3 = rotate(grids_train, angle=270, axes=(1,2), reshape=True)
+grids_train = np.vstack((grids_train, rotated_array1))
+ratings_train = np.concatenate((ratings_train, ratings_train))
 
 # features_subset = parallel_compute(grids_subset, advisor_val)
 features_train = []
