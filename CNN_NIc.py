@@ -64,12 +64,27 @@ features2[np.isnan(features2)] = 0
 features3 = np.array(features3)
 features3[np.isnan(features3)] = 0   
 
-grids = np.array([one_hot_encode(grid) for grid in grids])
-grids = grids.astype(np.float64)
+
+grids_onehot = np.array([one_hot_encode(grid) for grid in grids])
+grids_onehot = grids_onehot.astype(np.float64)
 features0 = features0.astype(np.float64)
 features1 = features1.astype(np.float64)
 features2 = features2.astype(np.float64)
 features3 = features3.astype(np.float64)
+
+np.save('features0.npy', features0)
+np.save('features1.npy', features1)
+np.save('features2.npy', features2)
+np.save('features3.npy', features3)
+np.savez('grids_onehot.npz', grids_onehot)
+
+features0 = np.load('features0.npy')
+features1 = np.load('features1.npy')
+features2 = np.load('features2.npy')
+features3 = np.load('features3.npy')
+
+with np.load('grids_onehot.npz') as data:
+    grids_onehot = data['arr_0']
 
 model0 = load_model("model0.h5")
 model1 = load_model("model1.h5")
@@ -77,10 +92,10 @@ model2 = load_model("model2.h5")
 model3 = load_model("model3.h5")
 
 
-preds0 = model0.predict([grids, features0])
-preds1 = model1.predict([grids, features1])
-preds2 = model2.predict([grids, features2])
-preds3 = model3.predict([grids, features3])
+preds0 = model0.predict([grids_onehot, features0])
+preds1 = model1.predict([grids_onehot, features1])
+preds2 = model2.predict([grids_onehot, features2])
+preds3 = model3.predict([grids_onehot, features3])
 
 threshold = 0.85
 mask0 = preds0 > threshold 
