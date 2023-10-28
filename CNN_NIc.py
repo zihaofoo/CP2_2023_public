@@ -15,23 +15,23 @@ ratings = np.load("datasets/scores.npy") # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the order of the scores in the dataset
 ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
-model0 = get_trained_model(advisor_val = 0)
-model0.save("model0.h5")
-
-model1 = get_trained_model(advisor_val = 1)
-model1.save("model1.h5")
-
-model2 = get_trained_model(advisor_val = 2)
-model2.save("model2.h5")
-
-model3 = get_trained_model(advisor_val = 3)
-model3.save("model3.h5")
+# model0 = get_trained_model(advisor_val = 0)
+# model0.save("model0.h5")
+# 
+# model1 = get_trained_model(advisor_val = 1)
+# model1.save("model1.h5")
+# 
+# model2 = get_trained_model(advisor_val = 2)
+# model2.save("model2.h5")
+# 
+# model3 = get_trained_model(advisor_val = 3)
+# model3.save("model3.h5")
 
 
 # Load the '.npz' file
-loaded_data = np.load('grids_advisor2_good.npz')
+# loaded_data = np.load('grids_advisor2_good.npz')
 # Access the arrays from the loaded data
-grids = loaded_data['arr_0']  # 'arr_0' is the default key used by np.savez
+# grids = loaded_data['arr_0']  # 'arr_0' is the default key used by np.savez
 
 features0 = []
 features1 = []
@@ -87,7 +87,15 @@ mask0 = preds0 > threshold
 mask1 = preds1 > threshold 
 mask2 = preds2 > threshold 
 mask3 = preds3 > threshold 
-
 mask_total = np.logical_and(mask0, np.logical_and(mask1, mask3))
 
-np.savez('grids_advisor2_filtered.npz', grids[mask_total])
+grids = load_grids() # Helper function we have provided to load the grids from the dataset
+# loaded_data = np.load('grids_advisor2_good.npz')
+# Access the arrays from the loaded data
+# grids = loaded_data['arr_0']  # 'arr_0' is the default key used by np.savez
+mask_total = mask_total.reshape(len(mask_total))
+print(mask_total.shape)
+print(grids.shape)
+
+print(grids[mask_total].shape)
+np.savez('grids_filtered.npz', grids[mask_total])
