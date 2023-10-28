@@ -4,8 +4,9 @@ import pandas as pd
 from scipy.stats import skew, kurtosis
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
+import tensorflow.keras as keras
+from keras.models import Sequential, Model
+from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
 from sklearn.metrics import r2_score
 from multiprocessing import Pool, cpu_count
 from functools import partial

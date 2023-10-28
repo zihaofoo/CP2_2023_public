@@ -29,10 +29,10 @@ features_subset = np.array(features_subset)
 features_subset[np.isnan(features_subset)] = 0
 features_train, features_test, ratings_train, ratings_test = train_test_split(features_subset, ratings_subset, test_size = 0.2, random_state = 42)
 
-grids_train = grids_train.astype(np.float32)
-features_train = features_train.astype(np.float32)
-grids_test = grids_test.astype(np.float32)
-features_test = features_test.astype(np.float32)
+grids_train = grids_train.astype(np.float64)
+features_train = features_train.astype(np.float64)
+grids_test = grids_test.astype(np.float64)
+features_test = features_test.astype(np.float64)
 
 model = create_combined_model()
 model.summary()
@@ -43,6 +43,4 @@ epochs = 29
 model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
 preds_train = model.predict([grids_train, features_train])
 preds_test = model.predict([grids_test, features_test])
-print(np.isnan(features_train, features_test, ratings_train, ratings_test).any())
-print(np.isnan(preds_train).any())
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor_val)
