@@ -6,6 +6,7 @@ from CNN_NIC_sub import *
 
 np.random.seed(42)
 tf.random.set_seed(42)
+tf.keras.utils.set_random_seed(42)
 
 grids = load_grids() # Helper function we have provided to load the grids from the dataset
 ratings = np.load("datasets/scores.npy") # Load advisor scores

@@ -4,9 +4,8 @@ import pandas as pd
 from scipy.stats import skew, kurtosis
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import tensorflow.keras as keras
-from keras.models import Sequential, Model
-from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
 from sklearn.metrics import r2_score
 from multiprocessing import Pool, cpu_count
 from functools import partial
@@ -235,9 +234,6 @@ def parallel_compute(grids, advisor):
 
 
 def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524):
-    
-    np.random.seed(42)
-    tf.random.set_seed(42)
 
     # Convolutional Branch
     input_grid = Input(shape=(7, 7, 5))
