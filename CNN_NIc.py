@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from CNN_NIC_sub_v2 import *
+from scipy.ndimage import rotate
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -15,6 +16,12 @@ ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
 advisor_val = 2
 grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,advisor_val]) #gets subset of the dataset rated by advisor 2
+rotated_array1 = rotate(grids_subset, angle=90, axes=(1,2), reshape=True)
+rotated_array2 = rotate(grids_subset, angle=180, axes=(1,2), reshape=True)
+rotated_array3 = rotate(grids_subset, angle=270, axes=(1,2), reshape=True)
+
+grids_subset = np.vstack((grids_subset, rotated_array1, rotated_array2, rotated_array3))
+ratings_subset = np.concatenate((ratings_subset, ratings_subset, ratings_subset, ratings_subset))
 grids_encoded = np.array([one_hot_encode(grid) for grid in grids_subset])
 
 # First split: 80% for training, 20% for temp (to be divided into test and validation)
