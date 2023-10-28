@@ -2,7 +2,7 @@ from utils_public import *
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from CNN_NIC_sub import *
+from CNN_NIC_sub_v2 import *
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -13,7 +13,7 @@ ratings = np.load("datasets/scores.npy") # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the order of the scores in the dataset
 ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
-advisor_val = 0
+advisor_val = 2
 grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,advisor_val]) #gets subset of the dataset rated by advisor 2
 grids_encoded = np.array([one_hot_encode(grid) for grid in grids_subset])
 
@@ -39,7 +39,7 @@ model = create_combined_model(advisor = advisor_val)
 model.summary()
 
 batch_size = 64
-epochs = 29
+epochs = 15
 
 model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
 preds_train = model.predict([grids_train, features_train])

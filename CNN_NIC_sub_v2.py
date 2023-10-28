@@ -232,7 +232,7 @@ def parallel_compute(grids, advisor):
 # Optimal hyperparameters: {'batch_size': 64, 'conv_layer_size': 171, 'dense_layer_size': 84, 'epochs': 29, 'learning_rate': 0.003837244776335524, 'num_conv_layers': 2, 'num_dense_layers': 4}
 
 
-def create_combined_model(num_conv_layers=1, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524, advisor = 0):
+def create_combined_model(num_conv_layers=3, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524, advisor = 0):
 
     # Convolutional Branch
     input_grid = Input(shape=(7, 7, 5))
