@@ -12,7 +12,7 @@ from functools import partial
 from scipy.spatial import distance
 import itertools
 import math
-from tensorflow.keras.regularizers import l2
+from tensorflow.keras.regularizers import l2,l1
 
 
 def compute_max_min_distance(grid, class_type_1, class_type_2):
@@ -241,7 +241,8 @@ def create_combined_model(num_conv_layers=3, conv_layer_size=171, num_dense_laye
     
     # Add convolutional layers dynamically
     for _ in range(num_conv_layers):
-        x = Conv2D(conv_layer_size, (3, 3), activation='relu', padding='same', kernel_regularizer=l2(0.01))(x)
+        x = Conv2D(conv_layer_size, (3, 3), activation='relu', padding='same')(x)
+
         
     x = Flatten()(x)
     x = Dense(dense_layer_size, activation='relu')(x)
