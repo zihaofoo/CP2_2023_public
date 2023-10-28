@@ -139,7 +139,6 @@ def compute_features(grid, advisor):
     # Append the largest cluster sizes
     features.extend(largest_sizes)
 
-        # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
         # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
         # features.extend(min_distances)
         # features.extend(max_distances)
