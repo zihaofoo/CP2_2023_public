@@ -14,56 +14,65 @@ ratings = np.load("datasets/scores.npy") # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the order of the scores in the dataset
 ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
-advisor_val = 2
-grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,advisor_val]) #gets subset of the dataset rated by advisor 2
-# rotated_array1 = rotate(grids_subset, angle=90, axes=(1,2), reshape=True)
-# rotated_array2 = rotate(grids_subset, angle=180, axes=(1,2), reshape=True)
-# rotated_array3 = rotate(grids_subset, angle=270, axes=(1,2), reshape=True)
+model0 = get_trained_model(advisor_val = 0)
+model1 = get_trained_model(advisor_val = 1)
+model2 = get_trained_model(advisor_val = 2)
+model3 = get_trained_model(advisor_val = 3)
 
-# grids_subset = np.vstack((grids_subset, rotated_array1, rotated_array2, rotated_array3))
-# ratings_subset = np.concatenate((ratings_subset, ratings_subset, ratings_subset, ratings_subset))
+# Load the '.npz' file
+loaded_data = np.load('grids_advisor2_good.npz')
+# Access the arrays from the loaded data
+grids = loaded_data['arr_0']  # 'arr_0' is the default key used by np.savez
 
-# First split: 80% for training, 20% for temp (to be divided into test and validation)
-grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = 42)
+features0 = []
+features1 = []
+features2 = []
+features3 = []
 
-# rotated_array1 = rotate(grids_train, angle=90, axes=(1,2), reshape=True)
-# rotated_array2 = rotate(grids_train, angle=180, axes=(1,2), reshape=True)
-# rotated_array3 = rotate(grids_train, angle=270, axes=(1,2), reshape=True)
-# grids_train = np.vstack((grids_train, rotated_array1))
-# ratings_train = np.concatenate((ratings_train, ratings_train))
-
-# features_subset = parallel_compute(grids_subset, advisor_val)
-features_train = []
-for grid in grids_train:
-    features = compute_features(grid, advisor = advisor_val)
+for grid in grids:
+    features = compute_features(grid, advisor = 0)
     features = np.nan_to_num(features, nan = 0)
-    features_train.append(features)
-features_train = np.array(features_train)
-features_train[np.isnan(features_train)] = 0
+    features0.append(features)
 
-features_test = []
-for grid in grids_test:
-    features = compute_features(grid, advisor = advisor_val)
+    features = compute_features(grid, advisor = 1)
     features = np.nan_to_num(features, nan = 0)
-    features_test.append(features)
-features_test = np.array(features_test)
-features_test[np.isnan(features_test)] = 0
+    features1.append(features)
 
-grids_train = np.array([one_hot_encode(grid) for grid in grids_train])
-grids_test = np.array([one_hot_encode(grid) for grid in grids_test])
+    features = compute_features(grid, advisor = 2)
+    features = np.nan_to_num(features, nan = 0)
+    features2.append(features)
 
-grids_train = grids_train.astype(np.float64)
-features_train = features_train.astype(np.float64)
-grids_test = grids_test.astype(np.float64)
-features_test = features_test.astype(np.float64)
+    features = compute_features(grid, advisor = 3)
+    features = np.nan_to_num(features, nan = 0)
+    features3.append(features)
 
-model = create_combined_model(advisor = advisor_val)
-model.summary()
+features0 = np.array(features0)
+features0[np.isnan(features0)] = 0
+features1 = np.array(features1)
+features1[np.isnan(features1)] = 0
+features2 = np.array(features2)
+features2[np.isnan(features2)] = 0
+features3 = np.array(features3)
+features3[np.isnan(features3)] = 0   
 
-batch_size = 64
-epochs = 15
+grids = np.array([one_hot_encode(grid) for grid in grids])
+grids = grids.astype(np.float64)
+features0 = features0.astype(np.float64)
+features1 = features1.astype(np.float64)
+features2 = features2.astype(np.float64)
+features3 = features3.astype(np.float64)
 
-model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
-preds_train = model.predict([grids_train, features_train])
-preds_test = model.predict([grids_test, features_test])
-plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor_val)
+preds0 = model0.predict([grids, features0])
+preds1 = model1.predict([grids, features1])
+preds2 = model2.predict([grids, features2])
+preds3 = model3.predict([grids, features3])
+
+threshold = 0.85
+mask0 = preds0 > threshold 
+mask1 = preds1 > threshold 
+mask2 = preds2 > threshold 
+mask3 = preds3 > threshold 
+
+mask_total = np.logical_and(mask0, np.logical_and(mask1, mask3))
+
+np.savez('grids_advisor2_filtered.npz', grids[mask_total])
