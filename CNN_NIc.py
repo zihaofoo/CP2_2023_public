@@ -6,6 +6,7 @@ from CNN_NIC_sub import *
 
 np.random.seed(42)
 tf.random.set_seed(42)
+
 grids = load_grids() # Helper function we have provided to load the grids from the dataset
 ratings = np.load("datasets/scores.npy") # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the order of the scores in the dataset
@@ -42,4 +43,6 @@ epochs = 29
 model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
 preds_train = model.predict([grids_train, features_train])
 preds_test = model.predict([grids_test, features_test])
+print(np.isnan(features_train, features_test, ratings_train, ratings_test).any())
+print(np.isnan(preds_train).any())
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor_val)

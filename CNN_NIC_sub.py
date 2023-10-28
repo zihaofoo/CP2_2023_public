@@ -4,15 +4,15 @@ import pandas as pd
 from scipy.stats import skew, kurtosis
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
-import keras
-from keras.models import Sequential, Model
-from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, BatchNormalization, concatenate
 from sklearn.metrics import r2_score
 from multiprocessing import Pool, cpu_count
 from functools import partial
 from scipy.spatial import distance
 import itertools
 import math
+
 
 def compute_max_min_distance(grid, class_type_1, class_type_2):
     # Find the positions of the two class types
@@ -237,6 +237,7 @@ def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_laye
     
     np.random.seed(42)
     tf.random.set_seed(42)
+
     # Convolutional Branch
     input_grid = Input(shape=(7, 7, 5))
     x = input_grid
@@ -266,7 +267,7 @@ def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_laye
     output = Dense(1)(combined)
 
     # Use the learning rate in the optimizer
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
     
     # Create the model
     model = Model(inputs=[input_grid, input_features], outputs=output)
@@ -285,7 +286,6 @@ def dfs(grid, row, col, target, visited):
         and not visited[row][col]
     ):
         visited[row][col] = 1
-        
         
         size = 1
         centroid_x, centroid_y = row, col
