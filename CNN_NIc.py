@@ -99,3 +99,17 @@ print(grids.shape)
 
 print(grids[mask_total].shape)
 np.savez('grids_filtered.npz', grids[mask_total])
+
+all_predictions = grids[mask_total]
+
+final_prediction_array = np.stack(all_predictions).T
+min_predictions = np.min(final_prediction_array, axis = 1)
+top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
+final_submission = grids[top_100_indices].astype(int)
+
+assert final_submission.shape == (100, 7, 7)
+assert final_submission.dtype == int
+assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
+id = np.random.randint(1e8, 1e9-1)
+np.save(f"{id}.npy", final_submission)
+
