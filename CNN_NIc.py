@@ -1,4 +1,3 @@
-
 from utils_public import *
 import numpy as np
 import pandas as pd
@@ -52,80 +51,85 @@ def count_connected_for_class(grid, target_class):
 
     return count
 
-def compute_features(grid, advisor):
-    features = []
-    grid = grid.astype(int)
-    # Number of each type
-    counts = np.bincount(grid.flatten(), minlength=5)
-    features.extend(counts)
-    # number of times a cell of class i is adjacent to a cell of class j.
-    inter_adjacency = np.zeros((5, 5), dtype=int)
-    
-    for i in range(7):
-        for j in range(7):
-            current_val = grid[i, j]
-            for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-                if 0 <= i+dx < 7 and 0 <= j+dy < 7:
-                    neighbor_val = grid[i+dx, j+dy]
-                    # Only update the upper diagonal (including main diagonal)
-                    if current_val <= neighbor_val:
-                        inter_adjacency[current_val, neighbor_val] += 1
+def compute_features(grids, advisor):
+    num_layers = grids.shape[0]
+    feature_all = np.zeros((num_layers, 216))
+    for i1 in range(num_layers):
+        grid = grids[i1,:,:]
+        features = []
+        grid = grid.astype(int)
+        # Number of each type
+        counts = np.bincount(grid.flatten(), minlength=5)
+        features.extend(counts)
+        # number of times a cell of class i is adjacent to a cell of class j.
+        inter_adjacency = np.zeros((5, 5), dtype=int)
+
+        for i in range(7):
+            for j in range(7):
+                current_val = grid[i, j]
+                for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+                    if 0 <= i+dx < 7 and 0 <= j+dy < 7:
+                        neighbor_val = grid[i+dx, j+dy]
+                        # Only update the upper diagonal (including main diagonal)
+                        if current_val <= neighbor_val:
+                            inter_adjacency[current_val, neighbor_val] += 1
                     
-    features.extend(inter_adjacency[np.triu_indices(5, k=0)])
+        features.extend(inter_adjacency[np.triu_indices(5, k=0)])
 
-    # Create a dictionary to store distances for each unique class pair
-    distances = {(i, j): [] for i in range(5) for j in range(i, 5)}
+        # Create a dictionary to store distances for each unique class pair
+        distances = {(i, j): [] for i in range(5) for j in range(i, 5)}
 
-    # Compute distances for each pair of cells
-    for i in range(7):
-        for j in range(7):
-            for m in range(7):
-                for n in range(7):
-                    d = np.sqrt((i - m) ** 2 + (j - n) ** 2)
-                    class_pair = tuple(sorted([grid[i, j], grid[m, n]]))
-                    distances[class_pair].append(d)
+        # Compute distances for each pair of cells
+        for i in range(7):
+            for j in range(7):
+                for m in range(7):
+                    for n in range(7):
+                        d = np.sqrt((i - m) ** 2 + (j - n) ** 2)
+                        class_pair = tuple(sorted([grid[i, j], grid[m, n]]))
+                        distances[class_pair].append(d)
 
-    # Compute statistics for each class pair and store in a flattened list
-    flattened_stats = []
+        # Compute statistics for each class pair and store in a flattened list
+        flattened_stats = []
 
-    for key, values in distances.items():
-        if values:  # Check if the list is not empty
-            try:
-                mean_val = np.mean(values)
-                var_val = np.var(values)
-            except:
-                mean_val = 0  
-                var_val = 0 
-            flattened_stats.extend([mean_val, var_val])
-        else:  # Handle the case where the list is empty
-            flattened_stats.extend([0, 0])  # or any default value
-    
-    if advisor == 0:
-        " Wellness advisor is focused on the health and wellbeing (both physical and mental) of citizens"
-        " They are very invested in the quality and accessibility of city's green spaces."
-        # Distance of park zones from each grid element
-        distance_matrix = compute_distance_to_class(grid, target_class = 3)
-        features.extend(distance_matrix)
-        # Number of connected parks
-        connections = count_connected_for_class(grid, target_class= 3)
-        features.extend([connections])
-        
-    if advisor == 2:
-        " Transportation advisor places an emphasis on accessibility and emissions. "
-        " They are focused on mimizing the distance over which the workforce needs to commute."
-        for cls in [0, 1, 2, 4]:
-                   
-            # obtains the minimum and max distance between residential areas and three others
-            # max_min = compute_max_min_distance(grid, class_type_1 = 0, class_type_2 = cls)
-            # features.extend(max_min)
-            # obtains distance to nearest residential
-            distance_matrix = compute_distance_to_class(grid, target_class = cls)
+        for key, values in distances.items():
+            if values:  # Check if the list is not empty
+                try:
+                    mean_val = np.mean(values)
+                    var_val = np.var(values)
+                except:
+                    mean_val = 0  
+                    var_val = 0 
+                flattened_stats.extend([mean_val, var_val])
+            else:  # Handle the case where the list is empty
+                flattened_stats.extend([0, 0])  # or any default value
+
+        if advisor == 0:
+            " Wellness advisor is focused on the health and wellbeing (both physical and mental) of citizens"
+            " They are very invested in the quality and accessibility of city's green spaces."
+            # Distance of park zones from each grid element
+            distance_matrix = compute_distance_to_class(grid, target_class = 3)
             features.extend(distance_matrix)
+            # Number of connected parks
+            connections = count_connected_for_class(grid, target_class= 3)
+            features.extend([connections])
 
-            # could possibly add proximity of houses at the centre
+        if advisor == 2:
+            " Transportation advisor places an emphasis on accessibility and emissions. "
+            " They are focused on mimizing the distance over which the workforce needs to commute."
+            for cls in [0, 1, 2, 4]:
 
+                # obtains the minimum and max distance between residential areas and three others
+                # max_min = compute_max_min_distance(grid, class_type_1 = 0, class_type_2 = cls)
+                # features.extend(max_min)
+                # obtains distance to nearest residential
+                distance_matrix = compute_distance_to_class(grid, target_class = cls)
+                features.extend(distance_matrix)
+
+                # could possibly add proximity of houses at the centre
+        features = np.array(features)
+        feature_all[i1,:] = features
     
-    return features
+    return feature_all
 
 def compute_distance_to_class(grid, target_class):
     # Find the positions of the target class
@@ -159,12 +163,12 @@ def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
     print(f"Train Set R2 score: {r2_score(ratings_train, preds_train)}") #Calculate R2 score
     print(f"Test Set R2 score: {r2_score(ratings_test, preds_test)}")
 
-def parallel_compute(grids, advisor):
-    with Pool(cpu_count()) as p:
-        # Partially apply the advisor to the compute_features function
-        func = partial(compute_features, advisor=advisor)
-        # Map the function over grids
-        return np.array(p.starmap(func, [(grid,) for grid in grids]))
+# def parallel_compute(grids, advisor):
+#     with Pool(cpu_count()) as p:
+#         # Partially apply the advisor to the compute_features function
+#         func = partial(compute_features, advisor=advisor)
+#         # Map the function over grids
+#         return np.array(p.starmap(func, [(grid,) for grid in grids]))
     
 
 # Optimal hyperparameters: {'batch_size': 64, 'conv_layer_size': 92, 'dense_layer_size': 84, 'epochs': 29, 'learning_rate': 0.003837244776335524, 'num_conv_layers': 2, 'num_dense_layers': 4}
@@ -225,8 +229,9 @@ grids_encoded = np.array([one_hot_encode(grid) for grid in grids_subset])
 # First split: 80% for training, 20% for temp (to be divided into test and validation)
 grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_encoded, ratings_subset, test_size=0.2, random_state=20)
 
-features_subset = parallel_compute(grids_subset, advisor_val)
-features_subset[np.isnan(features_subset)] = 0
+features_subset = compute_features(grids_train, advisor_val)
+# features_subset = parallel_compute(grids_subset, advisor_val)
+# features_subset[np.isnan(features_subset)] = 0
 features_train, features_test, ratings_train, ratings_test = train_test_split(features_subset, ratings_subset, test_size=0.2, random_state=20)
 
 grids_train = grids_train.astype(np.float32)
