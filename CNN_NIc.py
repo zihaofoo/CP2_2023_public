@@ -4,6 +4,7 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from CNN_NIC_sub_v2 import *
 from scipy.ndimage import rotate
+from tensorflow.keras.models import load_model
 
 np.random.seed(42)
 tf.random.set_seed(42)
@@ -15,9 +16,17 @@ score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the ord
 ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
 model0 = get_trained_model(advisor_val = 0)
+model0.save("model0.h5")
+
 model1 = get_trained_model(advisor_val = 1)
+model1.save("model1.h5")
+
 model2 = get_trained_model(advisor_val = 2)
+model2.save("model2.h5")
+
 model3 = get_trained_model(advisor_val = 3)
+model3.save("model3.h5")
+
 
 # Load the '.npz' file
 loaded_data = np.load('grids_advisor2_good.npz')
@@ -61,6 +70,12 @@ features0 = features0.astype(np.float64)
 features1 = features1.astype(np.float64)
 features2 = features2.astype(np.float64)
 features3 = features3.astype(np.float64)
+
+model0 = load_model("model0.h5")
+model1 = load_model("model1.h5")
+model2 = load_model("model2.h5")
+model3 = load_model("model3.h5")
+
 
 preds0 = model0.predict([grids, features0])
 preds1 = model1.predict([grids, features1])
