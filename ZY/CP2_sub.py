@@ -8,6 +8,8 @@ from datetime import datetime
 import pdb 
 import random
 from scipy.spatial import distance
+import itertools
+import math
 
 ## Mics Functions
 def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
@@ -198,11 +200,13 @@ def get_feats_all(grids, freq = []):
 
 def compute_features(grids, advisor):
     num_layers = grids.shape[0]
-    feature_all = np.zeros((num_layers,285))
+
+    feature_all = np.zeros((num_layers,290))
     for i1 in range(num_layers):
         grid = grids[i1,:,:]
         features = []
         grid = grid.astype(int)
+
         # Number of each type
         counts = np.bincount(grid.flatten(), minlength=5)
         features.extend(counts)
@@ -269,6 +273,8 @@ def compute_features(grids, advisor):
         if advisor == 2:
             " Transportation advisor places an emphasis on accessibility and emissions. "
             " They are focused on mimizing the distance over which the workforce needs to commute."
+
+            
             num_classes = 5
             centroid_list = np.zeros(num_classes)
             for cls in [0, 1, 2, 3, 4]:
@@ -280,20 +286,34 @@ def compute_features(grids, advisor):
                 distance_matrix = compute_distance_to_class(grid, target_class = cls)
                 features.extend(distance_matrix)
                 # calculate clusters above a min size
-                cluster_count = count_clusters_above_size(grid, cls, min_size = 4)
-                features.append(cluster_count)
+                # cluster_count = count_clusters_above_size(grid, cls, min_size = 2)
+                # features.append(cluster_count)
                 # could possibly add proximity of houses at the centre
                 # find whether the orientation matters 
 
                 ## largest_cluster_size = find_largest_cluster(grid, cls)
                 ## features.append(largest_cluster_size)
             # Find the largest clusters
-            largest_sizes, centroid_dict = find_largest_clusters(grid, num_classes)
+
+            largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
+            min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
+            features.extend(min_distances)
+            # features.extend(max_distances)
+
             
             # Create a list to store centroid tuples
             centroid_list = [centroid_dict[cls] for cls in range(num_classes)]
-        
-            
+
+
+            # Perform element-wise division and set to NaN where division by zero occurs
+            for i in range(len(centroid_list)):
+                for j in range(len(centroid_list)):
+                    if largest_sizes[i] != 0:
+                        centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
+                    else:
+                        centroid_list[i] = (np.nan, np.nan)
+
+     
             # Append the largest cluster sizes
             features.extend(largest_sizes)
             
@@ -301,7 +321,10 @@ def compute_features(grids, advisor):
             centroid_distances = []
             for i in range(num_classes):
                 for j in range(i + 1, num_classes):
-                    centroid_distances.append(distance.euclidean(centroid_list[i], centroid_list[j]))
+                    if np.isnan(centroid_list[i]).any() or np.isnan(centroid_list[j]).any():
+                        centroid_distances.append(0)
+                    else:
+                        centroid_distances.append(distance.euclidean(centroid_list[i], centroid_list[j]))
             
             # Append centroid distances to features
             features.extend(centroid_distances)
@@ -367,9 +390,10 @@ def fit_plot_predict_zyzh(grids, ratings, i):
     """ 
     Function to implement autoML to correlate test data and labels, for a given advisor i
     Returns the Prediction (model y-values) and the Predictor (Trained Model)
-    """
+    """    
     grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,i]) # gets subset of the dataset rated by advisor i
     grids_subset_train, grids_subset_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset)
+
     feats_train = compute_features(grids_subset_train, i)
     feats_test = compute_features(grids_subset_test, i)
     ## Feature transformation 
@@ -408,24 +432,30 @@ def fit_plot_predict_zyzh(grids, ratings, i):
 def find_largest_clusters(grid, num_classes):
     largest_cluster_sizes = np.zeros(num_classes, dtype=int)
     centroids = {}
+    largest_cluster_points = []
+       
     for target_value in range(num_classes):
         visited = np.zeros_like(grid)
         largest_cluster_size = 0
         largest_cluster_centroid = (0, 0)
-
+        largest_cluster_point = []
+        
         for row in range(len(grid)):
             for col in range(len(grid[0])):
                 if grid[row][col] == target_value and not visited[row][col]:
-                    cluster_size, cluster_centroid = dfs(grid, row, col, target_value, visited)
+                    cluster_size, cluster_centroid, cluster_point= dfs(grid, row, col, target_value, visited)
                     if cluster_size > largest_cluster_size:
                         largest_cluster_size = cluster_size
                         largest_cluster_centroid = cluster_centroid
+                        largest_cluster_point = cluster_point
+                        
 
         largest_cluster_sizes[target_value] = largest_cluster_size
         centroids[target_value] = largest_cluster_centroid
+        largest_cluster_points.append([point for point in largest_cluster_point if point])
         
 
-    return largest_cluster_sizes, centroids
+    return largest_cluster_sizes, centroids, largest_cluster_points
 
 def dfs(grid, row, col, target, visited):
     if (
@@ -435,16 +465,20 @@ def dfs(grid, row, col, target, visited):
         and not visited[row][col]
     ):
         visited[row][col] = 1
-
+        
+        
         size = 1
         centroid_x, centroid_y = row, col
+        points = [(row,col)]
         # include diagonal as cluster
         for dr in [-1, 0, 1]:
             for dc in [-1, 0, 1]:
-                size_delta, centroid_delta = dfs(grid, row + dr, col + dc, target, visited)
+                size_delta, centroid_delta, point_delta = dfs(grid, row + dr, col + dc, target, visited)
                 size += size_delta
                 centroid_x += centroid_delta[0]
                 centroid_y += centroid_delta[1]
+                points.extend(point_delta)
+                
         # Explore only adjacent cells (up, down, left, and right)
         # directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         # for dr, dc in directions:
@@ -452,14 +486,38 @@ def dfs(grid, row, col, target, visited):
         #     size += size_delta
         #     centroid_x += centroid_delta[0]
         #     centroid_y += centroid_delta[1]
-        centroid_x = centroid_x / size
-        centroid_y = centroid_y / size
 
 
 
-        return size, (centroid_x, centroid_y)
 
-    return 0, (0, 0)
+        return size, (centroid_x, centroid_y), points
+
+    return 0, (0, 0), ()
+
+def euclidean_distance(point1, point2):
+    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+
+def pairwise_distances_between_lists(lists_of_points):
+    num_lists = len(lists_of_points)
+    min_distances = [[float('inf')] * num_lists for _ in range(num_lists)]
+    max_distances = [[0] * num_lists for _ in range(num_lists)]
+
+    for i, j in itertools.combinations(range(num_lists), 2):
+        for point1 in lists_of_points[i]:
+            for point2 in lists_of_points[j]:
+                distance = euclidean_distance(point1, point2)
+                min_distances[i][j] = min(min_distances[i][j], distance)
+                min_distances[j][i] = min_distances[i][j]  # Symmetric
+                max_distances[i][j] = max(max_distances[i][j], distance)
+                max_distances[j][i] = max_distances[i][j]  # Symmetric
+
+    # Extract the upper triangular parts of the matrices
+    upper_triangular_min_distances = [min_distances[i][j] for i, j in itertools.combinations(range(num_lists), 2)]
+    upper_triangular_max_distances = [max_distances[i][j] for i, j in itertools.combinations(range(num_lists), 2)]
+
+    # Return 1D arrays
+    return upper_triangular_min_distances, upper_triangular_max_distances
+
 
 def count_clusters_above_size(grid, target_value, min_size):
     def dfs2(row, col):
@@ -469,18 +527,20 @@ def count_clusters_above_size(grid, target_value, min_size):
             or row >= len(grid)
             or col >= len(grid[0])
             or grid[row][col] != target_value
+            or visited[row][col]  # Check if cell is already visited
         ):
             return 0
+        visited[row][col] = True  # Mark the cell as visited
         count = 1
-        grid[row][col] = -1  # Mark the cell as visited
         for dr, dc in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
             count += dfs2(row + dr, col + dc)
         return count
 
     cluster_count = 0
+    visited = [[False] * len(grid[0]) for _ in range(len(grid))]  # Initialize visited matrix
     for row in range(len(grid)):
         for col in range(len(grid[0])):
-            if grid[row][col] == target_value:
+            if grid[row][col] == target_value and not visited[row][col]:
                 cluster_size = dfs2(row, col)
                 if cluster_size >= min_size:
                     cluster_count += 1

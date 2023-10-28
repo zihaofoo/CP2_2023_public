@@ -12,6 +12,7 @@ from CP2_sub import *
 
 
 ## Implementing ML model 
+np.random.seed(42)
 grids = load_grids()                                            # Helper function we have provided to load the grids from the dataset
 ratings = np.load("datasets/scores.npy")                        # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] # This is the order of the scores in the dataset
@@ -34,6 +35,6 @@ for i in range(2,3):
 # assert final_submission.dtype == int
 # assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
 # id = np.random.randint(1e8, 1e9-1)
-# np.save(f"{id}.npy", final_submission)
+# np.save(f"{id}.npy", final_submission) 
 # 
 # 
