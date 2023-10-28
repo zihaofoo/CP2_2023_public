@@ -186,7 +186,7 @@ def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_laye
     conv_branch = Dense(dense_layer_size, activation='relu')(x)
     
     # Dense Branch
-    input_features = Input(shape=(216,))
+    input_features = Input(shape=(70,))
     y = input_features
     
     # Add dense layers dynamically
