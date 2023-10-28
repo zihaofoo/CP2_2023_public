@@ -10,9 +10,9 @@ from keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Dropout, B
 from sklearn.metrics import r2_score
 from multiprocessing import Pool, cpu_count
 from functools import partial
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-
+from scipy.spatial import distance
+import itertools
+import math
 
 def compute_max_min_distance(grid, class_type_1, class_type_2):
     # Find the positions of the two class types
@@ -121,8 +121,70 @@ def compute_features(grid, advisor):
             # obtains distance to nearest residential
             distance_matrix = compute_distance_to_class(grid, target_class = cls)
             features.extend(distance_matrix)
-    
+
+        # could possibly add proximity of houses at the centre
+        # num_classes = 5
+        # centroid_list = np.zeros(num_classes)   
+        # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
+        # # Create a list to store centroid tuples
+        # centroid_list = [centroid_dict[cls] for cls in range(num_classes)] 
+        # # Perform element-wise division and set to NaN where division by zero occurs
+        # for i in range(len(centroid_list)):
+        #     for j in range(len(centroid_list)):
+        #         if largest_sizes[i] != 0:
+        #             centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
+        #         else:
+        #             centroid_list[i] = (np.nan, np.nan)
+        #  
+        # # Append the largest cluster sizes
+        # features.extend(largest_sizes)
+
+        # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
+        # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
+        # features.extend(min_distances)
+        # features.extend(max_distances)
+
+        # # Calculate centroid distances
+        # centroid_distances = []
+        # for i in range(num_classes):
+        #     for j in range(i + 1, num_classes):
+        #         if np.isnan(centroid_list[i]).any() or np.isnan(centroid_list[j]).any():
+        #             centroid_distances.append(0)
+        #         else:
+        #             centroid_distances.append(distance.euclidean(centroid_list[i], centroid_list[j]))
+        #         
+        # # Append centroid distances to features
+        # features.extend(centroid_distances)
     return features
+
+
+def find_largest_clusters(grid, num_classes):
+    largest_cluster_sizes = np.zeros(num_classes, dtype=int)
+    centroids = {}
+    largest_cluster_points = []
+       
+    for target_value in range(num_classes):
+        visited = np.zeros_like(grid)
+        largest_cluster_size = 0
+        largest_cluster_centroid = (0, 0)
+        largest_cluster_point = []
+        
+        for row in range(len(grid)):
+            for col in range(len(grid[0])):
+                if grid[row][col] == target_value and not visited[row][col]:
+                    cluster_size, cluster_centroid, cluster_point= dfs(grid, row, col, target_value, visited)
+                    if cluster_size > largest_cluster_size:
+                        largest_cluster_size = cluster_size
+                        largest_cluster_centroid = cluster_centroid
+                        largest_cluster_point = cluster_point
+                        
+
+        largest_cluster_sizes[target_value] = largest_cluster_size
+        centroids[target_value] = largest_cluster_centroid
+        largest_cluster_points.append([point for point in largest_cluster_point if point])
+        
+
+    return largest_cluster_sizes, centroids, largest_cluster_points
 
 def compute_distance_to_class(grid, target_class):
     # Find the positions of the target class
@@ -173,6 +235,8 @@ def parallel_compute(grids, advisor):
 
 def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524):
     
+    np.random.seed(42)
+    tf.random.set_seed(42)
     # Convolutional Branch
     input_grid = Input(shape=(7, 7, 5))
     x = input_grid
@@ -186,7 +250,7 @@ def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_laye
     conv_branch = Dense(dense_layer_size, activation='relu')(x)
     
     # Dense Branch
-    input_features = Input(shape=(70,))
+    input_features = Input(shape=(216,))
     y = input_features
     
     # Add dense layers dynamically
@@ -242,9 +306,6 @@ def dfs(grid, row, col, target, visited):
         #     size += size_delta
         #     centroid_x += centroid_delta[0]
         #     centroid_y += centroid_delta[1]
-
-
-
 
         return size, (centroid_x, centroid_y), points
 
