@@ -13,7 +13,7 @@ ratings = np.load("datasets/scores.npy") # Load advisor scores
 score_order = ["Wellness", "Tax", "Transportation", "Business"] #This is the order of the scores in the dataset
 ratings_df = pd.DataFrame(ratings, columns = score_order) #Create a dataframe
 
-advisor_val = 2
+advisor_val = 0
 grids_subset, ratings_subset = select_rated_subset(grids, ratings[:,advisor_val]) #gets subset of the dataset rated by advisor 2
 grids_encoded = np.array([one_hot_encode(grid) for grid in grids_subset])
 
@@ -35,7 +35,7 @@ features_train = features_train.astype(np.float64)
 grids_test = grids_test.astype(np.float64)
 features_test = features_test.astype(np.float64)
 
-model = create_combined_model()
+model = create_combined_model(advisor = advisor_val)
 model.summary()
 
 batch_size = 64

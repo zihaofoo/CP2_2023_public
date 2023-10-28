@@ -123,21 +123,21 @@ def compute_features(grid, advisor):
             features.extend(distance_matrix)
 
         # could possibly add proximity of houses at the centre
-        num_classes = 5
-        centroid_list = np.zeros(num_classes)   
-        largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
-        # Create a list to store centroid tuples
-        centroid_list = [centroid_dict[cls] for cls in range(num_classes)] 
-        # Perform element-wise division and set to NaN where division by zero occurs
-        for i in range(len(centroid_list)):
-            for j in range(len(centroid_list)):
-                if largest_sizes[i] != 0:
-                    centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
-                else:
-                    centroid_list[i] = (np.nan, np.nan)
-         
-        # Append the largest cluster sizes
-        features.extend(largest_sizes)
+    num_classes = 5
+    centroid_list = np.zeros(num_classes)   
+    largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
+    # Create a list to store centroid tuples
+    centroid_list = [centroid_dict[cls] for cls in range(num_classes)] 
+    # Perform element-wise division and set to NaN where division by zero occurs
+    for i in range(len(centroid_list)):
+        for j in range(len(centroid_list)):
+            if largest_sizes[i] != 0:
+                centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
+            else:
+                centroid_list[i] = (np.nan, np.nan)
+     
+    # Append the largest cluster sizes
+    features.extend(largest_sizes)
 
         # largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
         # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
@@ -233,7 +233,7 @@ def parallel_compute(grids, advisor):
 # Optimal hyperparameters: {'batch_size': 64, 'conv_layer_size': 171, 'dense_layer_size': 84, 'epochs': 29, 'learning_rate': 0.003837244776335524, 'num_conv_layers': 2, 'num_dense_layers': 4}
 
 
-def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524):
+def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524, advisor = 0):
 
     # Convolutional Branch
     input_grid = Input(shape=(7, 7, 5))
@@ -248,7 +248,14 @@ def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_laye
     conv_branch = Dense(dense_layer_size, activation='relu')(x)
     
     # Dense Branch
-    input_features = Input(shape=(216,))
+    if advisor == 0:
+        input_features = Input(shape=(75,))
+    if advisor == 1:
+        input_features = Input(shape=(25,))
+    if advisor == 2:
+        input_features = Input(shape=(221,))
+    if advisor == 3:
+        input_features = Input(shape=(25,))
     y = input_features
     
     # Add dense layers dynamically
