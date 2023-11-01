@@ -28,8 +28,8 @@ def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
     current_time = current_datetime.strftime("%Y-%m-%d-%H-%M-%S")
     fig.savefig('Prediction' + np.str_(i) + '_' + current_time + '.pdf')
     # plt.show()
-    print(f"Train Set R2 score: {r2_score(ratings_train, preds_train)}") #Calculate R2 score
-    print(f"Test Set R2 score: {r2_score(ratings_test, preds_test)}")
+    print(f"Train Set R2 score_only_cluster_size_no_3_4: {r2_score(ratings_train, preds_train)}") #Calculate R2 score
+    print(f"Test Set R2 score_only_cluster_size_no_3_4: {r2_score(ratings_test, preds_test)}")
 
 def get_predictions(grids, ratings, predictor):
     """ Function to predict advisor score using a trained predictor."""
@@ -201,7 +201,7 @@ def get_feats_all(grids, freq = []):
 def compute_features(grids, advisor):
     num_layers = grids.shape[0]
 
-    feature_all = np.zeros((num_layers,290))
+    feature_all = np.zeros((num_layers,192))
     for i1 in range(num_layers):
         grid = grids[i1,:,:]
         features = []
@@ -277,7 +277,8 @@ def compute_features(grids, advisor):
             
             num_classes = 5
             centroid_list = np.zeros(num_classes)
-            for cls in [0, 1, 2, 3, 4]:
+            for cls in [0, 1, 2]:
+
 
                 # obtains the minimum and max distance between residential areas and three others
                 # max_min = compute_max_min_distance(grid, class_type_1 = 0, class_type_2 = cls)
@@ -296,43 +297,55 @@ def compute_features(grids, advisor):
             # Find the largest clusters
 
             largest_sizes, centroid_dict, cluster_points = find_largest_clusters(grid, num_classes)
-            min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
-            features.extend(min_distances)
+            # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
+            # features.extend(min_distances)
             # features.extend(max_distances)
 
             
             # Create a list to store centroid tuples
-            centroid_list = [centroid_dict[cls] for cls in range(num_classes)]
+            ## centroid_list = [centroid_dict[cls] for cls in range(num_classes)]
 
 
-            # Perform element-wise division and set to NaN where division by zero occurs
-            for i in range(len(centroid_list)):
-                for j in range(len(centroid_list)):
-                    if largest_sizes[i] != 0:
-                        centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
-                    else:
-                        centroid_list[i] = (np.nan, np.nan)
+            ## # Perform element-wise division and set to NaN where division by zero occurs
+            ## for i in range(len(centroid_list)):
+            ##     for j in range(len(centroid_list)):
+            ##         if largest_sizes[i] != 0:
+            ##             centroid_list[i] = tuple(coord / largest_sizes[i] for coord in centroid_list[i])
+            ##         else:
+            ##             centroid_list[i] = (np.nan, np.nan)
 
      
             # Append the largest cluster sizes
             features.extend(largest_sizes)
             
             # Calculate centroid distances
-            centroid_distances = []
-            for i in range(num_classes):
-                for j in range(i + 1, num_classes):
-                    if np.isnan(centroid_list[i]).any() or np.isnan(centroid_list[j]).any():
-                        centroid_distances.append(0)
-                    else:
-                        centroid_distances.append(distance.euclidean(centroid_list[i], centroid_list[j]))
+            ## centroid_distances = []
+            ## for i in range(num_classes):
+            ##     for j in range(i + 1, num_classes):
+            ##         if np.isnan(centroid_list[i]).any() or np.isnan(centroid_list[j]).any():
+            ##             centroid_distances.append(0)
+            ##         else:
+            ##             centroid_distances.append(distance.euclidean(centroid_list[i], centroid_list[j]))
+            ## 
+            ## # Append centroid distances to features
+            ## features.extend(centroid_distances)
+
+            # Include the furthest distance of between classes
+            max_min = max_min_distances(grid)
+            features.extend(max_min)
             
-            # Append centroid distances to features
-            features.extend(centroid_distances)
 
 
-               
+
+            
+
+
+
         features = np.array(features)
+        #print(max_min.shape)
         feature_all[i1,:] = features
+        
+        
     return feature_all
 
 def count_connected_for_class(grid, target_class):
@@ -418,12 +431,39 @@ def fit_plot_predict_zyzh(grids, ratings, i):
 
     preds_test = predictor.predict(feats_test)
     preds_train = predictor.predict(feats_train)
-    np.savetxt('prediction_nic.csv', preds_test, delimiter=',')
-    np.savetxt('ground_truth_nic.csv', ratings_test, delimiter=',')
-    np.savez('grids.npz', grids_subset_test, delimiter=',')
+    # Positives, Negatives
+    actual_scores = [0.9, 0.7, 0.6, 0.8, 0.95]
+    predicted_scores = [0.88, 0.72, 0.75, 0.82, 0.91]
+
+    TP, TN, FP, FN = calculate_confusion_matrix(ratings_test, preds_test, threshold=0.85)
+    print("-")
+    print("-")
+    print("-")
+    print(f"True Positives (TP) of Test: {TP}")
+    print(f"True Negatives (TN) of Test: {TN}")
+    print(f"False Positives (FP) of Test: {FP}")
+    print(f"False Negatives (FN) of Test: {FN}")
+
+    TP, TN, FP, FN = calculate_confusion_matrix(ratings_train, preds_train, threshold=0.85)
+
+    print(f"True Positives (TP) of Train: {TP}")
+    print(f"True Negatives (TN) of Train: {TN}")
+    print(f"False Positives (FP) of Train: {FP}")
+    print(f"False Negatives (FN) of Train: {FN}")
+    print("-")
+    print("-")
+    print("-")
+
+
+    np.savetxt('prediction_only_cluster_size_no_3_4.csv', preds_test, delimiter=',')
+    np.savetxt('ground_truth_only_cluster_size_no_3_4.csv', ratings_test, delimiter=',')
+    np.savez('grids_only_cluster_size_no_3_4.npz', grids_subset_test, delimiter=',')
 
  
     plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i)
+    print("-")
+    print("-")
+    print("-")
     # feats_all = compute_features(grids, i)
     # feats_all = np.loadtxt('feats.csv', delimiter = ',')      # For old ZY-ZH features
     # predictions = get_predictions(feats_all, ratings[:,i], predictor)
@@ -547,3 +587,80 @@ def count_clusters_above_size(grid, target_value, min_size):
 
     return cluster_count
     
+def calculate_confusion_matrix(actual_scores, predicted_scores, threshold=0.85):
+    """
+    Calculate the confusion matrix for a binary classification task based on score thresholds.
+    
+    Args:
+    actual_scores (list): List of actual scores.
+    predicted_scores (list): List of predicted scores.
+    threshold (float): The threshold value for classifying as positive (default is 0.85).
+
+    Returns:
+    TP (int): True Positives
+    TN (int): True Negatives
+    FP (int): False Positives
+    FN (int): False Negatives
+    """
+    TP = TN = FP = FN = 0
+    for actual, predicted in zip(actual_scores, predicted_scores):
+        if actual > threshold and predicted > threshold:
+            TP += 1
+        elif actual <= threshold and predicted <= threshold:
+            TN += 1
+        elif actual <= threshold and predicted > threshold:
+            FP += 1
+        elif actual > threshold and predicted <= threshold:
+            FN += 1
+    return TP, TN, FP, FN
+
+def max_min_distances(arr):
+
+
+    mask_0 = np.argwhere(arr == 0)
+    mask_1 = np.argwhere(arr == 1)
+    mask_2 = np.argwhere(arr == 2)
+    mask_3 = np.argwhere(arr == 3)
+    mask_4 = np.argwhere(arr == 4)
+    feat_out = np.zeros(20)
+    feat_out[0] = get_pairwise_dist(mask_0, mask_1)
+    feat_out[1] = get_pairwise_dist(mask_0, mask_2)
+    feat_out[2] = get_pairwise_dist(mask_0, mask_3)
+    feat_out[3] = get_pairwise_dist(mask_0, mask_4)
+    feat_out[4] = get_pairwise_dist(mask_1, mask_0)
+    feat_out[5] = get_pairwise_dist(mask_1, mask_2) 
+    feat_out[6] = get_pairwise_dist(mask_1, mask_3)
+    feat_out[7] = get_pairwise_dist(mask_1, mask_4)
+    feat_out[8] = get_pairwise_dist(mask_2, mask_0)
+    feat_out[9] = get_pairwise_dist(mask_2, mask_1) 
+    feat_out[10] = get_pairwise_dist(mask_2, mask_3)
+    feat_out[11] = get_pairwise_dist(mask_2, mask_4)
+    feat_out[12] = get_pairwise_dist(mask_3, mask_0) 
+    feat_out[13] = get_pairwise_dist(mask_3, mask_1)
+    feat_out[14] = get_pairwise_dist(mask_3, mask_2)
+    feat_out[15] = get_pairwise_dist(mask_3, mask_4)
+    feat_out[16] = get_pairwise_dist(mask_4, mask_0) 
+    feat_out[17] = get_pairwise_dist(mask_4, mask_1)
+    feat_out[18] = get_pairwise_dist(mask_4, mask_2)
+    feat_out[19] = get_pairwise_dist(mask_4, mask_3)
+    
+
+    return feat_out
+
+def get_pairwise_dist(mask_A, mask_B):
+
+    # mask_A gives the reference points
+
+    distance_array = np.zeros(mask_A.shape[0])
+    n1 = np.shape(mask_B)[0]
+    for i1 in range(np.shape(mask_A)[0]):
+        dist = np.linalg.norm(mask_B - mask_A[i1] , axis = 1, ord = 2)
+    #    print(dist)
+        if dist.size == 0:
+            return 0
+        distance_array[i1] = min(dist)
+    #print(distance_array)        
+    if distance_array.size == 0:
+        return 0
+
+    return max(distance_array)

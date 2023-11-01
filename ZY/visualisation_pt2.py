@@ -5,18 +5,18 @@ from utils_public import *
 
 grids_subset = np.zeros((1250, 7, 7))
 # Load grids from 'grids.npz' using a context manager
-with np.load('grids.npz') as data:
+with np.load('grids_only_cluster_size_no_3_4.npz') as data:
     grids_subset = data['arr_0']
-ground_truth_df = pd.read_csv('ground_truth_nic.csv',header=None)
+ground_truth_df = pd.read_csv('ground_truth_only_cluster_size_no_3_4.csv',header=None)
 ground_truth = np.array(ground_truth_df)
 
-prediction_df = pd.read_csv('prediction_nic.csv',header=None)
+prediction_df = pd.read_csv('prediction_only_cluster_size_no_3_4.csv',header=None)
 prediction = np.array(prediction_df)
 difference = prediction - ground_truth
 
 # What I want to see 
 # Mask the differences where ground truth > 0.85
-mask = ground_truth > 0.85
+mask = ground_truth < 0.3
 filtered_differences = difference[mask]
 filtered_ground_truth = ground_truth[mask]
 filtered_prediction = prediction[mask]
@@ -47,7 +47,7 @@ bottom_20_prediction_df = pd.DataFrame(filtered_prediction[bottom_20_indices])
 combined_df = pd.concat([pd.concat([top_20_ground_truth_df, bottom_20_ground_truth_df], axis=0), pd.concat([top_20_prediction_df, bottom_20_prediction_df], axis=0)], axis=1)
 
 # Save the combined DataFrame to a CSV file
-combined_df.to_csv('combined_data.csv', index=False, header=False)
+combined_df.to_csv('combined_data_only_cluster_size_no_3_4.csv', index=False, header=False)
 
 plot_n_grids(top_20_grids)
 
