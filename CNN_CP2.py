@@ -158,7 +158,7 @@ bounds = [
 ]
 
 # Initialize Bayesian Optimization
-optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds)
+optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
 
 # Start the optimization process
 optimizer.run_optimization(max_iter = 10)
@@ -250,6 +250,13 @@ preds_train = torch.cat(preds_train).numpy()
 preds_test = torch.cat(preds_test).numpy()
 ratings_train = torch.cat(ratings_train).numpy()
 ratings_test = torch.cat(ratings_test).numpy()
+
+# Save the entire model
+torch.save(final_model, 'final_model' + np.str_(advisor) + '.pth')
+
+# Later on, to load the entire model
+loaded_model = torch.load('final_model' + np.str_(advisor) + '.pth')
+loaded_model.eval()  # Don't forget to call eval() for inference
 
 # Plot the results and calculate R^2 scores
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor)
