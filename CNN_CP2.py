@@ -10,7 +10,6 @@ from sklearn.metrics import r2_score
 from datetime import datetime
 import GPyOpt
 
-
 def predict(model, input_data):
     """
     Predict the ratings using the trained model.
@@ -74,76 +73,216 @@ train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=32)
 
-# Model Architecture
+# CNN Model Definition
 class CNNModel(nn.Module):
-    def __init__(self):
+    def __init__(self, filter_size:int, kernel_size:int, dense_units:int):
         super(CNNModel, self).__init__()
-        self.conv1 = nn.Conv2d(5, 32, 3, 1, padding = 1)  
-        self.fc1 = nn.Linear(32 * 7 * 7, 64)  
-        self.fc2 = nn.Linear(64, 1)
+        self.conv1 = nn.Conv2d(in_channels = 5, out_channels = filter_size, kernel_size = kernel_size, padding=kernel_size//2)
+        self.conv2 = nn.Conv2d(in_channels = filter_size, out_channels = filter_size * 2, kernel_size = kernel_size, padding=kernel_size//2)
+        self.fc1 = nn.Linear(in_features = (filter_size * 2) * 7 * 7, out_features = dense_units)
+        self.fc2 = nn.Linear(in_features = dense_units, out_features = 1)  # Change 10 to the number of classes you have
 
     def forward(self, x):
         x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
         x = x.view(x.size(0), -1)  # Flatten the tensor
         x = F.relu(self.fc1(x))
-        x = torch.sigmoid(self.fc2(x))
+        x = torch.sigmoid(self.fc2(x))  # Sigmoid activation for the output layer
         return x
 
-model = CNNModel()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# cfg = {'filter_size': 64, 'kernel_size': 3, 'dense_units': 128}
+# model = CNNModel(cfg['filter_size'], cfg['kernel_size'], cfg['dense_units']).to(device)
+# 
+# # Loss and Optimizer
+# criterion = nn.MSELoss()
+# optimizer = optim.Adam(model.parameters(), lr = 1E-3, weight_decay = 0.001)
+# 
+# # Training the Model
+# epochs = 50
+# for epoch in range(epochs):
+#     model.train()
+#     running_loss = 0.0
+#     for batch_idx, (data, target) in enumerate(train_loader):
+#         optimizer.zero_grad()
+#         outputs = model(data)
+#         loss = criterion(outputs, target)
+#         loss.backward()
+#         optimizer.step()
+#         running_loss += loss.item() * data.size(0)
+#     
+#     train_loss = running_loss / len(train_loader.dataset)
+#     print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
+# 
+# # Evaluate on Test Data
+# model.eval()
+# test_loss = 0.0
+# with torch.no_grad():
+#     for data, target in test_loader:
+#         outputs = model(data)
+#         loss = criterion(outputs, target)
+#         test_loss += loss.item() * data.size(0)
+# test_loss /= len(test_loader.dataset)
+# print(f"Test Loss: {test_loss:.4f}")
+# 
+# preds_train = []
+# preds_test = []
+# ratings_train = []
+# ratings_test = []
+# 
+# with torch.no_grad():
+#     for data, target in DataLoader(train_dataset, batch_size = 32):  # Iterating over batches
+#         outputs = model(data)
+#         preds_train.append(outputs)
+#         ratings_train.append(target)
+# 
+#     for data, target in DataLoader(test_dataset, batch_size = 32):  # Iterating over batches
+#         outputs = model(data)
+#         preds_test.append(outputs)
+#         ratings_test.append(target)
+# 
+# preds_train = torch.cat(preds_train).numpy()  # concatenate batches and convert to numpy array
+# preds_test = torch.cat(preds_test).numpy()  # concatenate batches and convert to numpy array
+# ratings_train = torch.cat(ratings_train).numpy()  # concatenate batches and convert to numpy array
+# ratings_test = torch.cat(ratings_test).numpy()  # concatenate batches and convert to numpy array
+# 
+# plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor)
 
-# Loss and Optimizer
+
+# Define the objective function for Bayesian Optimization
+def objective_function(params):
+    filter_size = int(params[0, 0])
+    kernel_size = int(params[0, 1])
+    dense_units = int(params[0, 2])
+    learning_rate = params[0, 3]
+    weight_decay = params[0, 4]
+
+    model = CNNModel(filter_size, kernel_size, dense_units).to(device)
+    criterion = nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr = learning_rate, weight_decay = weight_decay)
+
+    # Training loop
+    for epoch in range(epochs):
+        model.train()
+        running_loss = 0.0
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = data.to(device), target.to(device)
+            optimizer.zero_grad()
+            outputs = model(data)
+            loss = criterion(outputs, target)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item() * data.size(0)
+
+    # Validation loop (assuming you have a validation set)
+    model.eval()
+    validation_loss = 0.0
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            outputs = model(data)
+            loss = criterion(outputs, target)
+            validation_loss += loss.item() * data.size(0)
+    validation_loss /= len(test_loader.dataset)
+
+    # Return the validation loss as the objective to minimize
+    return validation_loss
+
+# Bayesian optimization bounds
+bounds = [
+    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 64)},
+    {'name': 'kernel_size', 'type': 'discrete', 'domain': (2, 5)},
+    {'name': 'dense_units', 'type': 'discrete', 'domain': (64, 128)},
+    {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-3)},
+    {'name': 'weight_decay', 'type': 'continuous', 'domain': (1e-4, 1e-2)}
+]
+
+# Initialize Bayesian Optimization
+optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds)
+
+# Start the optimization process
+optimizer.run_optimization(max_iter=10)
+
+# Print the best hyperparameters
+print("Best hyperparameters:")
+print(f"Filter size: {int(optimizer.x_opt[0])}")
+print(f"Kernel size: {int(optimizer.x_opt[1])}")
+print(f"Dense units: {int(optimizer.x_opt[2])}")
+print(f"Learning rate: {optimizer.x_opt[3]}")
+print(f"Best validation loss: {optimizer.fx_opt}")
+
+# Extract the best hyperparameters
+best_filter_size = int(optimizer.x_opt[0])
+best_kernel_size = int(optimizer.x_opt[1])
+best_dense_units = int(optimizer.x_opt[2])
+best_learning_rate = optimizer.x_opt[3]
+best_weight_decay = optimizer.x_opt[4]
+
+# Rebuild the model with the best hyperparameters
+final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units).to(device)
+
+# Loss and Optimizer for the final model
 criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), weight_decay = 0.001)
+optimizer = optim.Adam(final_model.parameters(), lr = best_learning_rate, weight_decay = best_weight_decay)
 
-# Training the Model
-epochs = 50
+# Training the final model
+epochs = 50  # Or however many epochs you deem necessary
 for epoch in range(epochs):
-    model.train()
+    final_model.train()
     running_loss = 0.0
     for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        outputs = model(data)
+        outputs = final_model(data)
         loss = criterion(outputs, target)
         loss.backward()
         optimizer.step()
         running_loss += loss.item() * data.size(0)
-    
+
     train_loss = running_loss / len(train_loader.dataset)
     print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
 
-# Evaluate on Test Data
-model.eval()
+# Evaluate the final model on test data
+final_model.eval()
 test_loss = 0.0
 with torch.no_grad():
     for data, target in test_loader:
-        outputs = model(data)
+        data, target = data.to(device), target.to(device)
+        outputs = final_model(data)
         loss = criterion(outputs, target)
         test_loss += loss.item() * data.size(0)
 test_loss /= len(test_loader.dataset)
 print(f"Test Loss: {test_loss:.4f}")
 
+# Predictions for plotting and R^2 calculation
 preds_train = []
 preds_test = []
 ratings_train = []
 ratings_test = []
 
 with torch.no_grad():
-    for data, target in DataLoader(train_dataset, batch_size = 32):  # Iterating over batches
-        outputs = model(data)
-        preds_train.append(outputs)
+    for data, target in DataLoader(train_dataset, batch_size=32):
+        data = data.to(device)
+        outputs = final_model(data)
+        preds_train.append(outputs.cpu())
         ratings_train.append(target)
 
-    for data, target in DataLoader(test_dataset, batch_size = 32):  # Iterating over batches
-        outputs = model(data)
-        preds_test.append(outputs)
+    for data, target in DataLoader(test_dataset, batch_size=32):
+        data = data.to(device)
+        outputs = final_model(data)
+        preds_test.append(outputs.cpu())
         ratings_test.append(target)
 
-preds_train = torch.cat(preds_train).numpy()  # concatenate batches and convert to numpy array
-preds_test = torch.cat(preds_test).numpy()  # concatenate batches and convert to numpy array
-ratings_train = torch.cat(ratings_train).numpy()  # concatenate batches and convert to numpy array
-ratings_test = torch.cat(ratings_test).numpy()  # concatenate batches and convert to numpy array
+# Concatenate all the batch results
+preds_train = torch.cat(preds_train).numpy()
+preds_test = torch.cat(preds_test).numpy()
+ratings_train = torch.cat(ratings_train).numpy()
+ratings_test = torch.cat(ratings_test).numpy()
 
+# Plot the results and calculate R^2 scores
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor)
+
+
 
 
 

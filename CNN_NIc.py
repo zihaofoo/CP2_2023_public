@@ -75,7 +75,6 @@ features3[np.isnan(features3)] = 0
 features3 = features3.astype(np.float64)
 np.save('features3.npy', features3)
 
-
 grids_onehot = np.array([one_hot_encode(grid) for grid in grids])
 grids_onehot = grids_onehot.astype(np.float64)
 np.savez('grids_onehot.npz', grids_onehot)
