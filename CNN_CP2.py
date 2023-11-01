@@ -149,19 +149,19 @@ def objective_function(params):
 
 # Bayesian optimization bounds
 bounds = [
-    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 64)},
+    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 128)},
     {'name': 'kernel_size', 'type': 'discrete', 'domain': (2, 5)},
-    {'name': 'dense_units', 'type': 'discrete', 'domain': (64, 128)},
+    {'name': 'dense_units', 'type': 'discrete', 'domain': (32, 256)},
     {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-3)},
     {'name': 'weight_decay', 'type': 'continuous', 'domain': (1e-4, 1e-2)},
-    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 50)},
+    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
 ]
 
 # Initialize Bayesian Optimization
 optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
 
 # Start the optimization process
-optimizer.run_optimization(max_iter = 10)
+optimizer.run_optimization(max_iter = 50)
 
 # Print the best hyperparameters
 print("Best hyperparameters:")
@@ -179,7 +179,7 @@ best_kernel_size = int(optimizer.x_opt[1])
 best_dense_units = int(optimizer.x_opt[2])
 best_learning_rate = optimizer.x_opt[3]
 best_weight_decay = optimizer.x_opt[4]
-best_epochs = optimizer.x_opt[5]
+best_epochs = int(optimizer.x_opt[5])
 
 
 ### Optimized hyperparameters for CNN
