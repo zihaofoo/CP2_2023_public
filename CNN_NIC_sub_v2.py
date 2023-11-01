@@ -139,6 +139,8 @@ def compute_features(grid, advisor):
      
     # Append the largest cluster sizes
     features.extend(largest_sizes)
+    # max_min = max_min_distances(grid)
+    # features.extend(max_min)
 
         # min_distances, max_distances = pairwise_distances_between_lists(cluster_points)
         # features.extend(min_distances)
@@ -155,6 +157,7 @@ def compute_features(grid, advisor):
         #         
         # # Append centroid distances to features
         # features.extend(centroid_distances)
+
     return features
 
 
@@ -370,7 +373,7 @@ def count_clusters_above_size(grid, target_value, min_size):
     return cluster_count
 
 
-def get_trained_model(advisor_val = 0):
+def get_trained_model(advisor_val = 0, eval_mode = False):
     
     grids = load_grids() # Helper function we have provided to load the grids from the dataset
     ratings = np.load("datasets/scores.npy") # Load advisor scores
@@ -416,6 +419,61 @@ def get_trained_model(advisor_val = 0):
     model = create_combined_model(advisor = advisor_val)
     model.summary()
     batch_size = 64
-    epochs = 15
+    epochs = 25
     model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
+
+    if eval_mode == True:
+        preds_train = model.predict([grids_train, features_train])
+        preds_test = model.predict([grids_test, features_test])
+        plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor_val)
+
     return model
+
+def max_min_distances(arr):
+    mask_0 = np.argwhere(arr == 0)
+    mask_1 = np.argwhere(arr == 1)
+    mask_2 = np.argwhere(arr == 2)
+    mask_3 = np.argwhere(arr == 3)
+    mask_4 = np.argwhere(arr == 4)
+    feat_out = np.zeros(20)
+    feat_out[0] = get_pairwise_dist(mask_0, mask_1)
+    feat_out[1] = get_pairwise_dist(mask_0, mask_2)
+    feat_out[2] = get_pairwise_dist(mask_0, mask_3)
+    feat_out[3] = get_pairwise_dist(mask_0, mask_4)
+    feat_out[4] = get_pairwise_dist(mask_1, mask_0)
+    feat_out[5] = get_pairwise_dist(mask_1, mask_2) 
+    feat_out[6] = get_pairwise_dist(mask_1, mask_3)
+    feat_out[7] = get_pairwise_dist(mask_1, mask_4)
+    feat_out[8] = get_pairwise_dist(mask_2, mask_0)
+    feat_out[9] = get_pairwise_dist(mask_2, mask_1) 
+    feat_out[10] = get_pairwise_dist(mask_2, mask_3)
+    feat_out[11] = get_pairwise_dist(mask_2, mask_4)
+    feat_out[12] = get_pairwise_dist(mask_3, mask_0) 
+    feat_out[13] = get_pairwise_dist(mask_3, mask_1)
+    feat_out[14] = get_pairwise_dist(mask_3, mask_2)
+    feat_out[15] = get_pairwise_dist(mask_3, mask_4)
+    feat_out[16] = get_pairwise_dist(mask_4, mask_0) 
+    feat_out[17] = get_pairwise_dist(mask_4, mask_1)
+    feat_out[18] = get_pairwise_dist(mask_4, mask_2)
+    feat_out[19] = get_pairwise_dist(mask_4, mask_3)
+    
+
+    return feat_out
+
+def get_pairwise_dist(mask_A, mask_B):
+    """
+    mask_A gives the reference points
+    """
+    distance_array = np.zeros(mask_A.shape[0])
+    n1 = np.shape(mask_B)[0]
+    for i1 in range(np.shape(mask_A)[0]):
+        dist = np.linalg.norm(mask_B - mask_A[i1] , axis = 1, ord = 2)
+    #    print(dist)
+        if dist.size == 0:
+            return 0
+        distance_array[i1] = min(dist)
+    #print(distance_array)        
+    if distance_array.size == 0:
+        return 0
+
+    return max(distance_array)
