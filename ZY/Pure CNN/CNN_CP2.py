@@ -110,11 +110,11 @@ class CNNModel(nn.Module):
         self.fc2 = nn.Linear(in_features = dense_units, out_features = 1)  # Change 10 to the number of classes you have
 
     # Dynamically create different convolution layers
-    def create_conv_layers(self, conv_number):
+    def create_conv_layers(self):
         layers = []
         in_channels = 5
         
-        for _ in range(conv_number):
+        for _ in range(self.conv_number):
             conv_layer = nn.Conv2d(in_channels, self.filter_size, self.kernel_size, padding=self.kernel_size // 2)
             layers.append(conv_layer)
             layers.append(nn.Dropout(self.dropout))
@@ -149,10 +149,11 @@ class CNNModel(nn.Module):
         return size
 
     # Dynamically create different fc layers
-    def create_fc_layers(self, fc_number):
+    def create_fc_layers(self):
         layers = []
+
         in_features = self.filter_size * self.calculate_output_size()
-        for _ in range(fc_number):
+        for _ in range(self.fc_number):
             fc_layer = nn.Linear(in_features, self.dense_units)
             layers.append(fc_layer)
             layers.append(nn.ReLU())
@@ -166,12 +167,12 @@ class CNNModel(nn.Module):
     
 
 
-    def forward(self, x, conv_number, fc_number):
-
-        conv_layers = self.create_conv_layers(conv_number)
+    def forward(self, X_train):
+        x = X_train
+        conv_layers = self.create_conv_layers()
         x = conv_layers(x)
         x = x.view(x.size(0), -1)  # Flatten the tensor
-        fc_layers = self.create_fc_layers(fc_number)        
+        fc_layers = self.create_fc_layers()        
         x = fc_layers(x)
         x = torch.sigmoid(x)  # Sigmoid activation for the output layer
         return x
@@ -202,7 +203,7 @@ def objective_function(params):
         for batch_idx, (data, target) in enumerate(train_loader):
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
-            outputs = model(data,conv_number,fc_number)
+            outputs = model(data)
             loss = criterion(outputs, target)
             loss.backward()
             optimizer.step()
@@ -214,7 +215,7 @@ def objective_function(params):
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
-            outputs = model(data,conv_number,fc_number)
+            outputs = model(data)
             loss = criterion(outputs, target)
             validation_loss += loss.item() * data.size(0)
     validation_loss /= len(test_loader.dataset)
@@ -229,7 +230,7 @@ bounds = [
     {'name': 'dense_units', 'type': 'discrete', 'domain': (32, 512)},
     {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-3)},
     {'name': 'weight_decay', 'type': 'continuous', 'domain': (1e-4, 1e-2)},
-    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
+    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 15)},
     {'name': 'dropout', 'type': 'continuous', 'domain': (0.2, 0.8)},
     {'name': 'conv_number', 'type': 'discrete', 'domain': (2, 5)},
     {'name': 'fc_number', 'type': 'discrete', 'domain': (1, 4)},
@@ -239,7 +240,7 @@ bounds = [
 optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
 # 
 # # Start the optimization process
-optimizer.run_optimization(max_iter = 150)
+optimizer.run_optimization(max_iter = 3)
 # 
 # # Print the best hyperparameters
 print("Best hyperparameters:")
@@ -293,7 +294,7 @@ for epoch in range(epochs):
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        outputs = final_model(data, best_conv_number, best_fc_number)
+        outputs = final_model(data)
         loss = criterion(outputs, target)
         loss.backward()
         optimizer.step()
@@ -308,7 +309,7 @@ test_loss = 0.0
 with torch.no_grad():
     for data, target in test_loader:
         data, target = data.to(device), target.to(device)
-        outputs = final_model(data, best_conv_number, best_fc_number)
+        outputs = final_model(data)
         loss = criterion(outputs, target)
         test_loss += loss.item() * data.size(0)
 test_loss /= len(test_loader.dataset)
@@ -330,13 +331,13 @@ ratings_test = []
 with torch.no_grad():
     for data, target in DataLoader(train_dataset, batch_size=32):
         data = data.to(device)
-        outputs = final_model(data, best_conv_number, best_fc_number)
+        outputs = final_model(data)
         preds_train.append(outputs.cpu())
         ratings_train.append(target)
 
     for data, target in DataLoader(test_dataset, batch_size=32):
         data = data.to(device)
-        outputs = final_model(data, best_conv_number, best_fc_number)
+        outputs = final_model(data)
         preds_test.append(outputs.cpu())
         ratings_test.append(target)
 
