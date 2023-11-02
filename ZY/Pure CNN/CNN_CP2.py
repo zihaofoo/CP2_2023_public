@@ -230,8 +230,6 @@ bounds = [
     {'name': 'dropout', 'type': 'continuous', 'domain': (0.5, 0.8)},
     {'name': 'conv_number', 'type': 'discrete', 'domain': (2, 5)},
     {'name': 'fc_number', 'type': 'discrete', 'domain': (2, 5)},
-    
-    
 ]
 
 # Initialize Bayesian Optimization
@@ -284,34 +282,41 @@ final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units, bes
 criterion = nn.MSELoss()
 optimizer = optim.Adam(final_model.parameters(), lr = best_learning_rate, weight_decay = best_weight_decay)
 
-# Training the final model
-epochs = best_epochs  # Or however many epochs you deem necessary
-for epoch in range(epochs):
-    final_model.train()
-    running_loss = 0.0
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
-        optimizer.zero_grad()
-        outputs = final_model(data)
-        loss = criterion(outputs, target)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item() * data.size(0)
+# # Training the final model
+# epochs = best_epochs  # Or however many epochs you deem necessary
+# for epoch in range(epochs):
+#     final_model.train()
+#     running_loss = 0.0
+#     for batch_idx, (data, target) in enumerate(train_loader):
+#         data, target = data.to(device), target.to(device)
+#         optimizer.zero_grad()
+#         outputs = final_model(data, best_conv_number, best_fc_number)
+#         loss = criterion(outputs, target)
+#         loss.backward()
+#         optimizer.step()
+#         running_loss += loss.item() * data.size(0)
+# 
+#     train_loss = running_loss / len(train_loader.dataset)
+#     print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
+# 
+# # Evaluate the final model on test data
+# final_model.eval()
+# test_loss = 0.0
+# with torch.no_grad():
+#     for data, target in test_loader:
+#         data, target = data.to(device), target.to(device)
+#         outputs = final_model(data, best_conv_number, best_fc_number)
+#         loss = criterion(outputs, target)
+#         test_loss += loss.item() * data.size(0)
+# test_loss /= len(test_loader.dataset)
+# print(f"Test Loss: {test_loss:.4f}")
 
-    train_loss = running_loss / len(train_loader.dataset)
-    print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
+# # Save the entire model
+# torch.save(final_model, 'final_model' + np.str_(advisor) + '.pth')
 
-# Evaluate the final model on test data
-final_model.eval()
-test_loss = 0.0
-with torch.no_grad():
-    for data, target in test_loader:
-        data, target = data.to(device), target.to(device)
-        outputs = final_model(data)
-        loss = criterion(outputs, target)
-        test_loss += loss.item() * data.size(0)
-test_loss /= len(test_loader.dataset)
-print(f"Test Loss: {test_loss:.4f}")
+# Later on, to load the entire model
+final_model = torch.load('final_model' + np.str_(advisor) + '.pth')
+final_model.eval()  # Don't forget to call eval() for inference
 
 # Predictions for plotting and R^2 calculation
 preds_train = []
@@ -322,13 +327,13 @@ ratings_test = []
 with torch.no_grad():
     for data, target in DataLoader(train_dataset, batch_size=32):
         data = data.to(device)
-        outputs = final_model(data)
+        outputs = final_model(data, best_conv_number, best_fc_number)
         preds_train.append(outputs.cpu())
         ratings_train.append(target)
 
     for data, target in DataLoader(test_dataset, batch_size=32):
         data = data.to(device)
-        outputs = final_model(data)
+        outputs = final_model(data, best_conv_number, best_fc_number)
         preds_test.append(outputs.cpu())
         ratings_test.append(target)
 
@@ -338,12 +343,10 @@ preds_test = torch.cat(preds_test).numpy()
 ratings_train = torch.cat(ratings_train).numpy()
 ratings_test = torch.cat(ratings_test).numpy()
 
-# Save the entire model
-torch.save(final_model, 'final_model' + np.str_(advisor) + '.pth')
-
-# Later on, to load the entire model
-loaded_model = torch.load('final_model' + np.str_(advisor) + '.pth')
-loaded_model.eval()  # Don't forget to call eval() for inference
+print(preds_test.shape)
+print(ratings_test.shape)
+print(preds_train.shape)
+print(ratings_train.shape)
 
 # Plot the results and calculate R^2 scores
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor)
