@@ -235,44 +235,47 @@ bounds = [
 ]
 
 # Initialize Bayesian Optimization
-optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
+# optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
+# # 
+# # # Start the optimization process
+# optimizer.run_optimization(max_iter = 100)
+# # 
+# # # Print the best hyperparameters
+# print("Best hyperparameters:")
+# print(f"Filter size: {int(optimizer.x_opt[0])}")
+# print(f"Kernel size: {int(optimizer.x_opt[1])}")
+# print(f"Dense units: {int(optimizer.x_opt[2])}")
+# print(f"Learning rate: {optimizer.x_opt[3]}")
+# print(f"Weight Decay: {optimizer.x_opt[4]}")
+# print(f"Epoch: {optimizer.x_opt[5]}")
+# print(f"Dropout: {optimizer.x_opt[6]}")
+# print(f"Number of Convolution: {optimizer.x_opt[7]}")
+# print(f"Number of fully connected: {optimizer.x_opt[8]}")
+# print(f"Best validation loss: {optimizer.fx_opt}")
 # 
-# # Start the optimization process
-optimizer.run_optimization(max_iter = 5)
 # 
-# # Print the best hyperparameters
-print("Best hyperparameters:")
-print(f"Filter size: {int(optimizer.x_opt[0])}")
-print(f"Kernel size: {int(optimizer.x_opt[1])}")
-print(f"Dense units: {int(optimizer.x_opt[2])}")
-print(f"Learning rate: {optimizer.x_opt[3]}")
-print(f"Weight Decay: {optimizer.x_opt[4]}")
-print(f"Epoch: {optimizer.x_opt[5]}")
-print(f"Dropout: {optimizer.x_opt[6]}")
-print(f"Number of Convolution: {optimizer.x_opt[7]}")
-print(f"Number of fully connected: {optimizer.x_opt[8]}")
-print(f"Best validation loss: {optimizer.fx_opt}")
-
-
-# Extract the best hyperparameters
-best_filter_size = int(optimizer.x_opt[0])
-best_kernel_size = int(optimizer.x_opt[1])
-best_dense_units = int(optimizer.x_opt[2])
-best_learning_rate = optimizer.x_opt[3]
-best_weight_decay = optimizer.x_opt[4]
-best_epochs = int(optimizer.x_opt[5])
-best_dropout = (optimizer.x_opt[6])
-best_conv_number = int(optimizer.x_opt[7])
-best_fc_number = int(optimizer.x_opt[8])
+# # Extract the best hyperparameters
+# best_filter_size = int(optimizer.x_opt[0])
+# best_kernel_size = int(optimizer.x_opt[1])
+# best_dense_units = int(optimizer.x_opt[2])
+# best_learning_rate = optimizer.x_opt[3]
+# best_weight_decay = optimizer.x_opt[4]
+# best_epochs = int(optimizer.x_opt[5])
+# best_dropout = (optimizer.x_opt[6])
+# best_conv_number = int(optimizer.x_opt[7])
+# best_fc_number = int(optimizer.x_opt[8])
 
 
 # Optimized hyperparameters for CNN
-##best_filter_size = 64
-##best_kernel_size = 3
-##best_dense_units = 128
-##best_learning_rate = 1E-3
-##best_weight_decay = 1E-3
-##best_epochs = 10
+best_filter_size = 128
+best_kernel_size = 5
+best_dense_units = 256
+best_learning_rate = 0.0002060092877953455
+best_weight_decay = 0.005590784258746772
+best_epochs = 10
+best_dropout = 0.5054302779657575
+best_conv_number = 5
+best_fc_number = 2
 
 # Rebuild the model with the best hyperparameters
 final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units, best_dropout, best_conv_number, best_fc_number).to(device)
