@@ -10,6 +10,7 @@ from sklearn.metrics import r2_score
 from datetime import datetime
 import GPyOpt
 import random
+import pdb
 
 ## Setting random seeds
 random_seed = 42
@@ -157,13 +158,13 @@ bounds = [
     {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
 ]
 
-# Initialize Bayesian Optimization
+# # Initialize Bayesian Optimization
 # optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
-# 
-# # Start the optimization process
+# # 
+# # # Start the optimization process
 # optimizer.run_optimization(max_iter = 1)
-# 
-# # Print the best hyperparameters
+# # 
+# # # Print the best hyperparameters
 # print("Best hyperparameters:")
 # print(f"Filter size: {int(optimizer.x_opt[0])}")
 # print(f"Kernel size: {int(optimizer.x_opt[1])}")
@@ -260,7 +261,7 @@ loaded_model.eval()  # Don't forget to call eval() for inference
 
 # Plot the results and calculate R^2 scores
 plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, advisor)
-
+pdb.set_trace()
 
 
 

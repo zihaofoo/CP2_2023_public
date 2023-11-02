@@ -10,6 +10,7 @@ from sklearn.metrics import r2_score
 from datetime import datetime
 import GPyOpt
 import random
+import pdb
 
 ## Setting random seeds
 random_seed = 42
@@ -159,6 +160,8 @@ class CNNModel(nn.Module):
             in_features = self.dense_units
         # Remove the last dropout layer
         layers.pop()
+        layers.append(nn.Linear(in_features,1))
+
         return nn.Sequential(*layers)
     
 
@@ -229,7 +232,7 @@ bounds = [
     {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
     {'name': 'dropout', 'type': 'continuous', 'domain': (0.5, 0.8)},
     {'name': 'conv_number', 'type': 'discrete', 'domain': (2, 5)},
-    {'name': 'fc_number', 'type': 'discrete', 'domain': (2, 5)},
+    {'name': 'fc_number', 'type': 'discrete', 'domain': (1, 4)},
 ]
 
 # Initialize Bayesian Optimization
