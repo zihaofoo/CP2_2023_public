@@ -158,37 +158,37 @@ bounds = [
 ]
 
 # Initialize Bayesian Optimization
-optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
+# optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
+# 
+# # Start the optimization process
+# optimizer.run_optimization(max_iter = 1)
+# 
+# # Print the best hyperparameters
+# print("Best hyperparameters:")
+# print(f"Filter size: {int(optimizer.x_opt[0])}")
+# print(f"Kernel size: {int(optimizer.x_opt[1])}")
+# print(f"Dense units: {int(optimizer.x_opt[2])}")
+# print(f"Learning rate: {optimizer.x_opt[3]}")
+# print(f"Weight Decay: {optimizer.x_opt[4]}")
+# print(f"Epoch: {optimizer.x_opt[5]}")
+# print(f"Best validation loss: {optimizer.fx_opt}")
+# 
+# # Extract the best hyperparameters
+# best_filter_size = int(optimizer.x_opt[0])
+# best_kernel_size = int(optimizer.x_opt[1])
+# best_dense_units = int(optimizer.x_opt[2])
+# best_learning_rate = optimizer.x_opt[3]
+# best_weight_decay = optimizer.x_opt[4]
+# best_epochs = int(optimizer.x_opt[5])
 
-# Start the optimization process
-optimizer.run_optimization(max_iter = 50)
 
-# Print the best hyperparameters
-print("Best hyperparameters:")
-print(f"Filter size: {int(optimizer.x_opt[0])}")
-print(f"Kernel size: {int(optimizer.x_opt[1])}")
-print(f"Dense units: {int(optimizer.x_opt[2])}")
-print(f"Learning rate: {optimizer.x_opt[3]}")
-print(f"Weight Decay: {optimizer.x_opt[4]}")
-print(f"Epoch: {optimizer.x_opt[5]}")
-print(f"Best validation loss: {optimizer.fx_opt}")
-
-# Extract the best hyperparameters
-best_filter_size = int(optimizer.x_opt[0])
-best_kernel_size = int(optimizer.x_opt[1])
-best_dense_units = int(optimizer.x_opt[2])
-best_learning_rate = optimizer.x_opt[3]
-best_weight_decay = optimizer.x_opt[4]
-best_epochs = int(optimizer.x_opt[5])
-
-
-### Optimized hyperparameters for CNN
-# best_filter_size = 64
-# best_kernel_size = 3
-# best_dense_units = 128
-# best_learning_rate = 1E-3
-# best_weight_decay = 1E-3
-# best_epochs = 50
+# Optimized hyperparameters for CNN
+best_filter_size = 64
+best_kernel_size = 3
+best_dense_units = 128
+best_learning_rate = 1E-3
+best_weight_decay = 1E-3
+best_epochs = 10
 
 # Rebuild the model with the best hyperparameters
 final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units).to(device)
