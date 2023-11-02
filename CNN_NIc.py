@@ -79,31 +79,50 @@ features3 = []
 # grids_onehot = grids_onehot.astype(np.float64)
 # np.savez('grids_onehot.npz', grids_onehot)
 
-features0 = np.load('features0.npy')
-features1 = np.load('features1.npy')
-features2 = np.load('features2.npy')
-features3 = np.load('features3.npy')
+# features0 = np.load('features0.npy')
+# features1 = np.load('features1.npy')
+# features2 = np.load('features2.npy')
+# features3 = np.load('features3.npy')
+# 
+# with np.load('grids_onehot.npz') as data:
+#     grids_onehot = data['arr_0']
+# # 
+# model0 = load_model("model0.h5")
+# model1 = load_model("model1.h5")
+# model2 = load_model("model2.h5")
+# model3 = load_model("model3.h5")
+# # 
+# # 
+# preds0 = model0.predict([grids_onehot, features0])
+# preds1 = model1.predict([grids_onehot, features1])
+# preds2 = model2.predict([grids_onehot, features2])
+# preds3 = model3.predict([grids_onehot, features3])
+# 
+preds0 = np.load('preds0.npy')
+preds1 = np.load('preds1.npy')
+preds2 = np.load('preds2.npy')
+preds3 = np.load('preds3.npy')
 
-with np.load('grids_onehot.npz') as data:
-    grids_onehot = data['arr_0']
-
-model0 = load_model("model0.h5")
-model1 = load_model("model1.h5")
-model2 = load_model("model2.h5")
-model3 = load_model("model3.h5")
-
-
-preds0 = model0.predict([grids_onehot, features0])
-preds1 = model1.predict([grids_onehot, features1])
-preds2 = model2.predict([grids_onehot, features2])
-preds3 = model3.predict([grids_onehot, features3])
-
-threshold = 0.85
+# 
+threshold = 0.0
 mask0 = preds0 > threshold 
 mask1 = preds1 > threshold 
-mask2 = preds2 > threshold 
+mask2 = preds2 > 0.8
 mask3 = preds3 > threshold 
-mask_total = mask0 & mask1 & mask2 & mask3
+mask_total = np.logical_and(mask0, np.logical_and(mask1, np.logical_and(mask2, mask3)))
+
+
+# np.save('mask0.npy', mask0)
+# np.save('mask1.npy', mask1)
+# np.save('mask2.npy', mask2)
+# np.save('mask3.npy', mask3)
+# 
+
+# mask0 = np.load('mask0.npy')
+# mask1 = np.load('mask1.npy')
+# mask2 = np.load('mask2.npy')
+# mask3 = np.load('mask3.npy')
+
 
 
 grids = load_grids() # Helper function we have provided to load the grids from the dataset
@@ -116,8 +135,8 @@ print(mask_total.shape)
 print(grids.shape)
 
 print(grids[mask_total].shape)
-np.savez('grids_filtered_all_above_0.85.npz', grids[mask_total])
-
+np.savez('grids_filtered_advisor_above_0.8.npz', grids[mask_total])
+pdb.set_trace()
 all_predictions = grids[mask_total]
 
 final_prediction_array = np.stack(all_predictions).T

@@ -96,18 +96,17 @@ class CNNModel(nn.Module):
         self.conv_number = conv_number
         self.fc_number = fc_number
         self.conv1 = nn.Conv2d(in_channels = 5, out_channels = filter_size, kernel_size = kernel_size, padding = kernel_size//2)
-        self.conv2 = nn.Conv2d(in_channels = filter_size, out_channels = filter_size * 2, kernel_size = kernel_size, padding = kernel_size//2)
-        
-        # self.dropout = nn.Dropout(p=dropout)
-    
-        # Use a dummy input to calculate the correct size after conv layers
-        dummy_input = torch.zeros(1, 5, 7, 7)  # Assuming the input size is (batch, channels, height, width)
-        with torch.no_grad():
-            dummy_output = self.conv2(self.conv1(dummy_input))
-            
-        num_flatten_features = dummy_output.numel()
-        self.fc1 = nn.Linear(in_features = num_flatten_features, out_features = dense_units)
-        self.fc2 = nn.Linear(in_features = dense_units, out_features = 1)  # Change 10 to the number of classes you have
+        # self.conv2 = nn.Conv2d(in_channels = filter_size, out_channels = filter_size * 2, kernel_size = kernel_size, padding = kernel_size//2)
+        # 
+        # # self.dropout = nn.Dropout(p=dropout)
+        # # Use a dummy input to calculate the correct size after conv layers
+        # dummy_input = torch.zeros(1, 5, 7, 7)  # Assuming the input size is (batch, channels, height, width)
+        # with torch.no_grad():
+        #     dummy_output = self.conv2(self.conv1(dummy_input))
+        #     
+        # num_flatten_features = dummy_output.numel()
+        # self.fc1 = nn.Linear(in_features = num_flatten_features, out_features = dense_units)
+        # self.fc2 = nn.Linear(in_features = dense_units, out_features = 1)  # Change 10 to the number of classes you have
 
     # Dynamically create different convolution layers
     def create_conv_layers(self):
@@ -225,12 +224,12 @@ def objective_function(params):
 
 # Bayesian optimization bounds
 bounds = [
-    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 512)},
+    {'name': 'filter_size', 'type': 'discrete', 'domain': (16, 512)},
     {'name': 'kernel_size', 'type': 'discrete', 'domain': (2, 5)},
-    {'name': 'dense_units', 'type': 'discrete', 'domain': (32, 512)},
+    {'name': 'dense_units', 'type': 'discrete', 'domain': (16, 512)},
     {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-3)},
     {'name': 'weight_decay', 'type': 'continuous', 'domain': (1e-4, 1e-2)},
-    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 15)},
+    {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
     {'name': 'dropout', 'type': 'continuous', 'domain': (0.2, 0.8)},
     {'name': 'conv_number', 'type': 'discrete', 'domain': (2, 5)},
     {'name': 'fc_number', 'type': 'discrete', 'domain': (1, 4)},
