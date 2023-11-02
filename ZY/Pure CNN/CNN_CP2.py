@@ -224,59 +224,59 @@ def objective_function(params):
 
 # Bayesian optimization bounds
 bounds = [
-    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 128)},
+    {'name': 'filter_size', 'type': 'discrete', 'domain': (32, 512)},
     {'name': 'kernel_size', 'type': 'discrete', 'domain': (2, 5)},
-    {'name': 'dense_units', 'type': 'discrete', 'domain': (32, 256)},
+    {'name': 'dense_units', 'type': 'discrete', 'domain': (32, 512)},
     {'name': 'learning_rate', 'type': 'continuous', 'domain': (1e-4, 1e-3)},
     {'name': 'weight_decay', 'type': 'continuous', 'domain': (1e-4, 1e-2)},
     {'name': 'epochs', 'type': 'discrete', 'domain': (10, 150)},
-    {'name': 'dropout', 'type': 'continuous', 'domain': (0.5, 0.8)},
+    {'name': 'dropout', 'type': 'continuous', 'domain': (0.2, 0.8)},
     {'name': 'conv_number', 'type': 'discrete', 'domain': (2, 5)},
     {'name': 'fc_number', 'type': 'discrete', 'domain': (1, 4)},
 ]
 
 # Initialize Bayesian Optimization
-# optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
-# # 
-# # # Start the optimization process
-# optimizer.run_optimization(max_iter = 100)
-# # 
-# # # Print the best hyperparameters
-# print("Best hyperparameters:")
-# print(f"Filter size: {int(optimizer.x_opt[0])}")
-# print(f"Kernel size: {int(optimizer.x_opt[1])}")
-# print(f"Dense units: {int(optimizer.x_opt[2])}")
-# print(f"Learning rate: {optimizer.x_opt[3]}")
-# print(f"Weight Decay: {optimizer.x_opt[4]}")
-# print(f"Epoch: {optimizer.x_opt[5]}")
-# print(f"Dropout: {optimizer.x_opt[6]}")
-# print(f"Number of Convolution: {optimizer.x_opt[7]}")
-# print(f"Number of fully connected: {optimizer.x_opt[8]}")
-# print(f"Best validation loss: {optimizer.fx_opt}")
+optimizer = GPyOpt.methods.BayesianOptimization(f = objective_function, domain = bounds, verbosity = True)
 # 
+# # Start the optimization process
+optimizer.run_optimization(max_iter = 150)
 # 
-# # Extract the best hyperparameters
-# best_filter_size = int(optimizer.x_opt[0])
-# best_kernel_size = int(optimizer.x_opt[1])
-# best_dense_units = int(optimizer.x_opt[2])
-# best_learning_rate = optimizer.x_opt[3]
-# best_weight_decay = optimizer.x_opt[4]
-# best_epochs = int(optimizer.x_opt[5])
-# best_dropout = (optimizer.x_opt[6])
-# best_conv_number = int(optimizer.x_opt[7])
-# best_fc_number = int(optimizer.x_opt[8])
+# # Print the best hyperparameters
+print("Best hyperparameters:")
+print(f"Filter size: {int(optimizer.x_opt[0])}")
+print(f"Kernel size: {int(optimizer.x_opt[1])}")
+print(f"Dense units: {int(optimizer.x_opt[2])}")
+print(f"Learning rate: {optimizer.x_opt[3]}")
+print(f"Weight Decay: {optimizer.x_opt[4]}")
+print(f"Epoch: {optimizer.x_opt[5]}")
+print(f"Dropout: {optimizer.x_opt[6]}")
+print(f"Number of Convolution: {optimizer.x_opt[7]}")
+print(f"Number of fully connected: {optimizer.x_opt[8]}")
+print(f"Best validation loss: {optimizer.fx_opt}")
+
+
+# Extract the best hyperparameters
+best_filter_size = int(optimizer.x_opt[0])
+best_kernel_size = int(optimizer.x_opt[1])
+best_dense_units = int(optimizer.x_opt[2])
+best_learning_rate = optimizer.x_opt[3]
+best_weight_decay = optimizer.x_opt[4]
+best_epochs = int(optimizer.x_opt[5])
+best_dropout = (optimizer.x_opt[6])
+best_conv_number = int(optimizer.x_opt[7])
+best_fc_number = int(optimizer.x_opt[8])
 
 
 # Optimized hyperparameters for CNN
-best_filter_size = 128
-best_kernel_size = 5
-best_dense_units = 256
-best_learning_rate = 0.0002060092877953455
-best_weight_decay = 0.005590784258746772
-best_epochs = 10
-best_dropout = 0.5054302779657575
-best_conv_number = 5
-best_fc_number = 2
+# best_filter_size = 128
+# best_kernel_size = 5
+# best_dense_units = 256
+# best_learning_rate = 0.0002060092877953455
+# best_weight_decay = 0.005590784258746772
+# best_epochs = 10
+# best_dropout = 0.5054302779657575
+# best_conv_number = 5
+# best_fc_number = 2
 
 # Rebuild the model with the best hyperparameters
 final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units, best_dropout, best_conv_number, best_fc_number).to(device)
@@ -285,37 +285,37 @@ final_model = CNNModel(best_filter_size, best_kernel_size, best_dense_units, bes
 criterion = nn.MSELoss()
 optimizer = optim.Adam(final_model.parameters(), lr = best_learning_rate, weight_decay = best_weight_decay)
 
-# # Training the final model
-# epochs = best_epochs  # Or however many epochs you deem necessary
-# for epoch in range(epochs):
-#     final_model.train()
-#     running_loss = 0.0
-#     for batch_idx, (data, target) in enumerate(train_loader):
-#         data, target = data.to(device), target.to(device)
-#         optimizer.zero_grad()
-#         outputs = final_model(data, best_conv_number, best_fc_number)
-#         loss = criterion(outputs, target)
-#         loss.backward()
-#         optimizer.step()
-#         running_loss += loss.item() * data.size(0)
-# 
-#     train_loss = running_loss / len(train_loader.dataset)
-#     print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
-# 
-# # Evaluate the final model on test data
-# final_model.eval()
-# test_loss = 0.0
-# with torch.no_grad():
-#     for data, target in test_loader:
-#         data, target = data.to(device), target.to(device)
-#         outputs = final_model(data, best_conv_number, best_fc_number)
-#         loss = criterion(outputs, target)
-#         test_loss += loss.item() * data.size(0)
-# test_loss /= len(test_loader.dataset)
-# print(f"Test Loss: {test_loss:.4f}")
+# Training the final model
+epochs = best_epochs  # Or however many epochs you deem necessary
+for epoch in range(epochs):
+    final_model.train()
+    running_loss = 0.0
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        outputs = final_model(data, best_conv_number, best_fc_number)
+        loss = criterion(outputs, target)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item() * data.size(0)
 
-# # Save the entire model
-# torch.save(final_model, 'final_model' + np.str_(advisor) + '.pth')
+    train_loss = running_loss / len(train_loader.dataset)
+    print(f"Epoch {epoch+1}/{epochs}, Loss: {train_loss:.4f}")
+
+# Evaluate the final model on test data
+final_model.eval()
+test_loss = 0.0
+with torch.no_grad():
+    for data, target in test_loader:
+        data, target = data.to(device), target.to(device)
+        outputs = final_model(data, best_conv_number, best_fc_number)
+        loss = criterion(outputs, target)
+        test_loss += loss.item() * data.size(0)
+test_loss /= len(test_loader.dataset)
+print(f"Test Loss: {test_loss:.4f}")
+
+# Save the entire model
+torch.save(final_model, 'final_model' + np.str_(advisor) + '.pth')
 
 # Later on, to load the entire model
 final_model = torch.load('final_model' + np.str_(advisor) + '.pth')
