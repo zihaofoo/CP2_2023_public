@@ -9,6 +9,7 @@ import seaborn as sns
 import pandas as pd
 from CNN_NIC_sub_v2 import *
 from tensorflow.keras.models import load_model
+from matplotlib.pyplot import hist
 
 class VAE(nn.Module): #Create VAE class inheriting from pytorch nn Module class
     def __init__(self, input_channels, hidden_size, num_layers, latent_dim, image_size, kernel_size, stride):
@@ -294,6 +295,17 @@ random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Random
 # 
 preds0, preds1, preds2, preds3 = score_samples(generated_samples)
 rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
+
+fig0, ax0 = plt.subplots()
+ax0.hist(preds0)
+fig1, ax1 = plt.subplots()
+ax1.hist(preds1)
+fig2, ax2 = plt.subplots()
+ax2.hist(preds2)
+fig3, ax3 = plt.subplots()
+ax3.hist(preds3)
+
+plt.show()
 # 
 # 
 # all_predictions = [generated_sample_predictions, random_sample_predictions, final_prediction_array[:1000]] #Select only the last 1000 of the dataset for speed
