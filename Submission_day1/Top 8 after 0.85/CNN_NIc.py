@@ -142,75 +142,82 @@ print(top_eight.shape)
 final_predictions = np.zeros((4,7,7))
 
 
-for i in (5,7,9,11,13,15,17,19):
-    if i == 5:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[0:1]))
-    if i == 7:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[1:2]))
-    if i == 9:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[2:3]))
-    if i == 11:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[3:4]))
-    if i == 13:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[4:5]))
-    if i == 15:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[5:6]))
-    if i == 17:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[6:7]))
-    if i == 19:
-        for j in range(i):
-            final_predictions = np.vstack((final_predictions,top_eight[7:8]))
+confirm_good = np.vstack((top_eight[0:1],top_eight[3:]))
+np.save(f"6_confirm_good_185858285.npy", confirm_good)
+print(confirm_good.shape)
 
 
-print(np.array(final_predictions).shape)
-final_submission = final_predictions.astype(int)
-
-#--------------------------------------------------------------------------------
-### this is for creating 100 entries from top 30
-## # Assuming final_submission is a (28, 7, 7) array
-## temp = final_submission[:10]
+## # Confirmed 20 invalids, 4 are 7x7 zeros, meaning 7+9 are wrong
+## for i in (5,7,9,11,13,15,17,19):
+##     if i == 5:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[0:1]))
+##     if i == 7:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[1:2]))
+##     if i == 9:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[2:3]))
+##     if i == 11:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[3:4]))
+##     if i == 13:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[4:5]))
+##     if i == 15:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[5:6]))
+##     if i == 17:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[6:7]))
+##     if i == 19:
+##         for j in range(i):
+##             final_predictions = np.vstack((final_predictions,top_eight[7:8]))
 ## 
-## # Initialize an empty array to store the 80 matrices
-## result_matrices = np.empty((80, 7, 7), dtype=int)
 ## 
-## # Iterate through the first 10 matrices
-## for i in range(10):
-##     # Original matrix
-##     original_matrix = temp[i]
+## print(np.array(final_predictions).shape)
+## final_submission = final_predictions.astype(int)
 ## 
-##     # Rotate 90 degrees four times (0, 90, 180, 270 degrees)
-##     for j in range(4):
-##         result_matrices[i * 4 + j] = np.rot90(original_matrix, j)
+## #--------------------------------------------------------------------------------
+## ### this is for creating 100 entries from top 30
+## ## # Assuming final_submission is a (28, 7, 7) array
+## ## temp = final_submission[:10]
+## ## 
+## ## # Initialize an empty array to store the 80 matrices
+## ## result_matrices = np.empty((80, 7, 7), dtype=int)
+## ## 
+## ## # Iterate through the first 10 matrices
+## ## for i in range(10):
+## ##     # Original matrix
+## ##     original_matrix = temp[i]
+## ## 
+## ##     # Rotate 90 degrees four times (0, 90, 180, 270 degrees)
+## ##     for j in range(4):
+## ##         result_matrices[i * 4 + j] = np.rot90(original_matrix, j)
+## ## 
+## ##     # Flip horizontally and rotate 90 degrees four times (0, 90, 180, 270 degrees)
+## ##     flipped_matrix = np.fliplr(original_matrix)
+## ##     for j in range(4):
+## ##         result_matrices[40 + i * 4 + j] = np.rot90(flipped_matrix, j)
+## ## 
+## ## final_submission = np.vstack((final_submission[10:],result_matrices))
+## ## print(final_submission.shape)
+## #--------------------------------------------------------------------------------
 ## 
-##     # Flip horizontally and rotate 90 degrees four times (0, 90, 180, 270 degrees)
-##     flipped_matrix = np.fliplr(original_matrix)
-##     for j in range(4):
-##         result_matrices[40 + i * 4 + j] = np.rot90(flipped_matrix, j)
+## # Now, result_matrices contains the 80 modified matrices
 ## 
-## final_submission = np.vstack((final_submission[10:],result_matrices))
-## print(final_submission.shape)
-#--------------------------------------------------------------------------------
-
-# Now, result_matrices contains the 80 modified matrices
-
-# final_prediction_array = np.stack(all_predictions).T
-# min_predictions = np.min(final_prediction_array, axis = 1)
-# top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
-# final_submission = grids[top_100_indices].astype(int)
-# pdb.set_trace()
-
-
-
-assert final_submission.shape == (100, 7, 7)
-assert final_submission.dtype == int
-assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
-id = np.random.randint(1e8, 1e9-1)
-np.save(f"185858285.npy", final_submission)
-
+## # final_prediction_array = np.stack(all_predictions).T
+## # min_predictions = np.min(final_prediction_array, axis = 1)
+## # top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
+## # final_submission = grids[top_100_indices].astype(int)
+## # pdb.set_trace()
+## 
+## 
+## 
+## assert final_submission.shape == (100, 7, 7)
+## assert final_submission.dtype == int
+## assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
+## id = np.random.randint(1e8, 1e9-1)
+## np.save(f"185858285.npy", final_submission)
+## 
+## 
