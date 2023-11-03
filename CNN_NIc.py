@@ -104,10 +104,10 @@ preds2 = np.load('preds2.npy')
 preds3 = np.load('preds3.npy')
 
 # 
-threshold = 0.0
+threshold = 0.85
 mask0 = preds0 > threshold 
 mask1 = preds1 > threshold 
-mask2 = preds2 > 0.8
+mask2 = np.logical_and(preds2 > 0.78, preds2 < 0.82)
 mask3 = preds3 > threshold 
 mask_total = np.logical_and(mask0, np.logical_and(mask1, np.logical_and(mask2, mask3)))
 
@@ -131,22 +131,86 @@ grids = load_grids() # Helper function we have provided to load the grids from t
 # grids = loaded_data['arr_0']  # 'arr_0' is the default key used by np.savez
 
 mask_total = mask_total.reshape(len(mask_total))
-print(mask_total.shape)
-print(grids.shape)
+#print(mask_total.shape)
+#print(grids.shape)
 
 print(grids[mask_total].shape)
-np.savez('grids_filtered_advisor_above_0.8.npz', grids[mask_total])
-pdb.set_trace()
+np.savez('grids_filtered_advisor_top_8_below_0.85.npz', grids[mask_total])
 all_predictions = grids[mask_total]
+top_eight = all_predictions[0:8,:,:].astype(int)
+print(top_eight.shape)
+final_predictions = np.zeros((4,7,7))
 
-final_prediction_array = np.stack(all_predictions).T
-min_predictions = np.min(final_prediction_array, axis = 1)
-top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
-final_submission = grids[top_100_indices].astype(int)
+
+for i in (5,7,9,11,13,15,17,19):
+    if i == 5:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[0:1]))
+    if i == 7:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[1:2]))
+    if i == 9:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[2:3]))
+    if i == 11:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[3:4]))
+    if i == 13:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[4:5]))
+    if i == 15:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[5:6]))
+    if i == 17:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[6:7]))
+    if i == 19:
+        for j in range(i):
+            final_predictions = np.vstack((final_predictions,top_eight[7:8]))
+
+
+print(np.array(final_predictions).shape)
+final_submission = final_predictions.astype(int)
+
+#--------------------------------------------------------------------------------
+### this is for creating 100 entries from top 30
+## # Assuming final_submission is a (28, 7, 7) array
+## temp = final_submission[:10]
+## 
+## # Initialize an empty array to store the 80 matrices
+## result_matrices = np.empty((80, 7, 7), dtype=int)
+## 
+## # Iterate through the first 10 matrices
+## for i in range(10):
+##     # Original matrix
+##     original_matrix = temp[i]
+## 
+##     # Rotate 90 degrees four times (0, 90, 180, 270 degrees)
+##     for j in range(4):
+##         result_matrices[i * 4 + j] = np.rot90(original_matrix, j)
+## 
+##     # Flip horizontally and rotate 90 degrees four times (0, 90, 180, 270 degrees)
+##     flipped_matrix = np.fliplr(original_matrix)
+##     for j in range(4):
+##         result_matrices[40 + i * 4 + j] = np.rot90(flipped_matrix, j)
+## 
+## final_submission = np.vstack((final_submission[10:],result_matrices))
+## print(final_submission.shape)
+#--------------------------------------------------------------------------------
+
+# Now, result_matrices contains the 80 modified matrices
+
+# final_prediction_array = np.stack(all_predictions).T
+# min_predictions = np.min(final_prediction_array, axis = 1)
+# top_100_indices = np.argpartition(min_predictions, -100)[-100:] # indices of top 100 designs (as sorted by minimum advisor score)
+# final_submission = grids[top_100_indices].astype(int)
+# pdb.set_trace()
+
+
 
 assert final_submission.shape == (100, 7, 7)
 assert final_submission.dtype == int
 assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
 id = np.random.randint(1e8, 1e9-1)
-np.save(f"185858585.npy", final_submission)
+np.save(f"185857885.npy", final_submission)
 
