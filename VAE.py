@@ -230,21 +230,28 @@ summary(model, input_size=(input_channels, image_size[0], image_size[1]))
 for epoch in range(1, num_epochs + 1): #Loop over num_epochs
     train(epoch, grids_tensor) #Call train function for each epoch
 
+# Save the entire model
+torch.save(model, 'VAE_model' + '.pth')
 
-originals = np.random.choice(np.arange(len(grids)), size=5, replace=False) #Select 5 random indices
-reconstructions = reconstruct_from_vae(model, grids_tensor[originals], device) #Reconstruct
-plot_reconstruction(grids[originals], reconstructions) #Compare
-
-samples = sample_from_vae(model, 7, latent_dim, device)
-plot_n_grids(samples) #Plot generated grids
-
-generated_samples = sample_from_vae(model, 1000, latent_dim, device) #Sample from VAE
-random_samples = np.random.choice(np.arange(5), size = (1000,7,7)) #Randomly Sample Grids
-
-generated_sample_predictions = score_samples(generated_samples)
-random_sample_predictions = score_samples(random_samples)
+# Later on, to load the entire model
+VAE_model = torch.load('VAE_model' + '.pth')
+VAE_model.eval()  # Don't forget to call eval() for inference
 
 
-all_predictions = [generated_sample_predictions, random_sample_predictions, final_prediction_array[:1000]] #Select only the last 1000 of the dataset for speed
-all_names = ["VAE-Generated", "Random-Generated", "Dataset Subset"]
-compare_violinplots(all_predictions, all_names) #Plot!
+# originals = np.random.choice(np.arange(len(grids)), size=5, replace=False) #Select 5 random indices
+# reconstructions = reconstruct_from_vae(model, grids_tensor[originals], device) #Reconstruct
+# plot_reconstruction(grids[originals], reconstructions) #Compare
+# 
+# samples = sample_from_vae(model, 7, latent_dim, device)
+# plot_n_grids(samples) #Plot generated grids
+# 
+# generated_samples = sample_from_vae(model, 1000, latent_dim, device) #Sample from VAE
+# random_samples = np.random.choice(np.arange(5), size = (1000,7,7)) #Randomly Sample Grids
+# 
+# generated_sample_predictions = score_samples(generated_samples)
+# random_sample_predictions = score_samples(random_samples)
+# 
+# 
+# all_predictions = [generated_sample_predictions, random_sample_predictions, final_prediction_array[:1000]] #Select only the last 1000 of the dataset for speed
+# all_names = ["VAE-Generated", "Random-Generated", "Dataset Subset"]
+# compare_violinplots(all_predictions, all_names) #Plot!
