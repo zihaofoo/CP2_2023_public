@@ -7,7 +7,8 @@ from torchsummary import summary
 from utils_public import *
 import seaborn as sns
 import pandas as pd
-
+from CNN_NIC_sub_v2 import *
+from tensorflow.keras.models import load_model
 
 class VAE(nn.Module): #Create VAE class inheriting from pytorch nn Module class
     def __init__(self, input_channels, hidden_size, num_layers, latent_dim, image_size, kernel_size, stride):
@@ -175,15 +176,57 @@ def sample_from_vae(model, num_samples, latent_dim, device='cpu'):
         samples = probabilistic_sample(samples) #Can switch to argmax sample
     return samples.to('cpu').numpy()
 
-def score_samples(samples): #Function to score all samples. Requires trained regressors in all_predictors object
-    samples = samples.reshape(samples.shape[0], 49) #Reformat data into the format regressors expect
-    samples = pd.DataFrame(samples, columns = range(grids_subset.shape[1]), dtype = "object")
-    sample_predictions = []
-    for i in range(4): #Loop over advisores
-        predictor = all_predictors[i] #Select appropriate regressor
-        sample_predictions.append(predictor.predict(samples)) #Call regressor
-    sample_predictions = np.stack(sample_predictions).T #Stack scores together
-    return sample_predictions
+def score_samples(grids): #Function to score all samples. Requires trained regressors in all_predictors object
+    
+    features0 = []
+    features1 = []
+    features2 = []
+    features3 = []
+
+    for grid in grids:
+        features = compute_features(grid, advisor = 0)
+        features = np.nan_to_num(features, nan = 0)
+        features0.append(features)
+    features0 = np.array(features0)
+    features0[np.isnan(features0)] = 0
+    features0 = features0.astype(np.float64)
+
+    for grid in grids:
+        features = compute_features(grid, advisor = 1)
+        features = np.nan_to_num(features, nan = 0)
+        features1.append(features)
+    features1 = np.array(features1)
+    features1[np.isnan(features1)] = 0
+    features1 = features1.astype(np.float64)
+
+    for grid in grids:
+        features = compute_features(grid, advisor = 2)
+        features = np.nan_to_num(features, nan = 0)
+        features2.append(features)
+    features2 = np.array(features2)
+    features2[np.isnan(features2)] = 0
+    features2 = features2.astype(np.float64)
+
+    for grid in grids:
+        features = compute_features(grid, advisor = 3)
+        features = np.nan_to_num(features, nan = 0)
+        features3.append(features)
+    features3 = np.array(features3)
+    features3[np.isnan(features3)] = 0   
+    features3 = features3.astype(np.float64)
+    
+    grids_onehot = np.array([one_hot_encode(grid) for grid in grids])
+    grids_onehot = grids_onehot.astype(np.float64)
+
+    model0 = load_model("model0.h5")
+    model1 = load_model("model1.h5")
+    model2 = load_model("model2.h5")
+    model3 = load_model("model3.h5")
+    preds0 = model0.predict([grids_onehot, features0])
+    preds1 = model1.predict([grids_onehot, features1])
+    preds2 = model2.predict([grids_onehot, features2])
+    preds3 = model3.predict([grids_onehot, features3])
+    return preds0, preds1, preds2, preds3
 
 def compare_violinplots(all_predictions, all_names):
     #Wrangle dataframe predictions into the format expected by seaborn violinplot
@@ -226,30 +269,31 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3) #Instantiate the Optimizer
 
 summary(model, input_size=(input_channels, image_size[0], image_size[1]))
 
-# Main loop
-for epoch in range(1, num_epochs + 1): #Loop over num_epochs
-    train(epoch, grids_tensor) #Call train function for each epoch
-
-# Save the entire model
-torch.save(model, 'VAE_model' + '.pth')
+# # Main loop
+# for epoch in range(1, num_epochs + 1): #Loop over num_epochs
+#     train(epoch, grids_tensor) #Call train function for each epoch
+# 
+# # Save the entire model
+# torch.save(model, 'VAE_model' + '.pth')
 
 # Later on, to load the entire model
 VAE_model = torch.load('VAE_model' + '.pth')
 VAE_model.eval()  # Don't forget to call eval() for inference
 
 
-# originals = np.random.choice(np.arange(len(grids)), size=5, replace=False) #Select 5 random indices
-# reconstructions = reconstruct_from_vae(model, grids_tensor[originals], device) #Reconstruct
+# originals = np.random.choice(np.arange(len(grids)), size=2, replace=False) #Select 5 random indices
+# reconstructions = reconstruct_from_vae(VAE_model, grids_tensor[originals], device) #Reconstruct
 # plot_reconstruction(grids[originals], reconstructions) #Compare
 # 
 # samples = sample_from_vae(model, 7, latent_dim, device)
 # plot_n_grids(samples) #Plot generated grids
+
+num_sample = 100
+generated_samples = sample_from_vae(model, num_sample, latent_dim, device) #Sample from VAE
+random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Randomly Sample Grids
 # 
-# generated_samples = sample_from_vae(model, 1000, latent_dim, device) #Sample from VAE
-# random_samples = np.random.choice(np.arange(5), size = (1000,7,7)) #Randomly Sample Grids
-# 
-# generated_sample_predictions = score_samples(generated_samples)
-# random_sample_predictions = score_samples(random_samples)
+preds0, preds1, preds2, preds3 = score_samples(generated_samples)
+rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
 # 
 # 
 # all_predictions = [generated_sample_predictions, random_sample_predictions, final_prediction_array[:1000]] #Select only the last 1000 of the dataset for speed
