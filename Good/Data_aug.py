@@ -14,6 +14,7 @@ original_grids = np.vstack((original_grids,np.load('Day2_good.npy')))
 
 
 print(original_grids.shape[0])
+np.save('grids_best.npy', original_grids)
 
 # Initialize an empty array to store the 80 matrices
 # result_matrices = np.empty((8 * 13, 7, 7), dtype=int)
