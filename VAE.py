@@ -244,7 +244,9 @@ def compare_violinplots(all_predictions, all_names):
     #Plot the distributions
     sns.violinplot(x="Advisor", y="Score", hue="Method", data=all_dfs, linewidth=1, palette = ["#F08E18", "#888888", "#DC267F"])
 
-grids = load_grids() #Helper function we have provided to load the grids from the dataset
+# grids = load_grids() #Helper function we have provided to load the grids from the dataset
+grids = np.load('grids_best.npy')
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #Check if gpu is available, otherwise use cpu
 grids_oh = (np.arange(5) == grids[...,None]).astype(int) # Onehot encode
 grids_tensor = torch.from_numpy(grids_oh) # Torch tensor from numpy
@@ -257,13 +259,13 @@ input_channels = 5
 image_size = (7, 7)
 
 #Can tune these parameters
-latent_dim = 20
+latent_dim = 5
 hidden_size = 128
 num_layers = 2
 kernel_size = 3
 stride = 1
-num_epochs = 60
-batch_size = 1024
+num_epochs = 120
+batch_size = 64
 
 model = VAE(input_channels, hidden_size, num_layers, latent_dim, image_size, kernel_size, stride).to(device) #Instantiate the VAE
 optimizer = optim.Adam(model.parameters(), lr=1e-3) #Instantiate the Optimizer
@@ -271,16 +273,15 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3) #Instantiate the Optimizer
 summary(model, input_size=(input_channels, image_size[0], image_size[1]))
 
 # # Main loop
-# for epoch in range(1, num_epochs + 1): #Loop over num_epochs
-#     train(epoch, grids_tensor) #Call train function for each epoch
+for epoch in range(1, num_epochs + 1): #Loop over num_epochs
+    train(epoch, grids_tensor) #Call train function for each epoch
 # 
 # # Save the entire model
-# torch.save(model, 'VAE_model' + '.pth')
+torch.save(model, 'VAE_model' + '.pth')
 
 # Later on, to load the entire model
 VAE_model = torch.load('VAE_model' + '.pth')
 VAE_model.eval()  # Don't forget to call eval() for inference
-
 
 # originals = np.random.choice(np.arange(len(grids)), size=2, replace=False) #Select 5 random indices
 # reconstructions = reconstruct_from_vae(VAE_model, grids_tensor[originals], device) #Reconstruct
@@ -293,19 +294,19 @@ num_sample = 100
 generated_samples = sample_from_vae(model, num_sample, latent_dim, device) #Sample from VAE
 random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Randomly Sample Grids
 # 
-preds0, preds1, preds2, preds3 = score_samples(generated_samples)
-rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
-
-fig0, ax0 = plt.subplots()
-ax0.hist(preds0)
-fig1, ax1 = plt.subplots()
-ax1.hist(preds1)
-fig2, ax2 = plt.subplots()
-ax2.hist(preds2)
-fig3, ax3 = plt.subplots()
-ax3.hist(preds3)
-
-plt.show()
+# preds0, preds1, preds2, preds3 = score_samples(generated_samples)
+# rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
+# 
+# fig0, ax0 = plt.subplots()
+# ax0.hist(preds0)
+# fig1, ax1 = plt.subplots()
+# ax1.hist(preds1)
+# fig2, ax2 = plt.subplots()
+# ax2.hist(preds2)
+# fig3, ax3 = plt.subplots()
+# ax3.hist(preds3)
+# 
+# plt.show()
 # 
 # 
 # all_predictions = [generated_sample_predictions, random_sample_predictions, final_prediction_array[:1000]] #Select only the last 1000 of the dataset for speed
