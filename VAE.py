@@ -289,7 +289,7 @@ VAE_model.eval()  # Don't forget to call eval() for inference
 # samples = sample_from_vae(model, 7, latent_dim, device)
 # plot_n_grids(samples) #Plot generated grids
 
-num_sample = 100
+num_sample = 1000
 generated_samples = sample_from_vae(model, num_sample, latent_dim, device) #Sample from VAE
 random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Randomly Sample Grids
 # 
@@ -304,6 +304,16 @@ fig2, ax2 = plt.subplots()
 ax2.hist(preds2)
 fig3, ax3 = plt.subplots()
 ax3.hist(preds3)
+
+
+fig4, ax4 = plt.subplots()
+ax4.hist(rand_preds0)
+fig5, ax5 = plt.subplots()
+ax5.hist(rand_preds1)
+fig6, ax6 = plt.subplots()
+ax6.hist(rand_preds2)
+fig7, ax7 = plt.subplots()
+ax7.hist(rand_preds3)
 
 plt.show()
 # 

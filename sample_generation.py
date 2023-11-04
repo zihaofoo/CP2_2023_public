@@ -179,19 +179,13 @@ def sample_from_vae(model, num_samples, latent_dim, device='cpu'):
     return samples.to('cpu').numpy()
 
 def score_samples(grids): #Function to score all samples. Requires trained regressors in all_predictors object
-    
+    grids_onehot = np.array([one_hot_encode(grid) for grid in grids])
+    grids_onehot = grids_onehot.astype(np.float64)
+
     features0 = []
     features1 = []
     features2 = []
     features3 = []
-
-    for grid in grids:
-        features = compute_features(grid, advisor = 0)
-        features = np.nan_to_num(features, nan = 0)
-        features0.append(features)
-    features0 = np.array(features0)
-    features0[np.isnan(features0)] = 0
-    features0 = features0.astype(np.float64)
 
     for grid in grids:
         features = compute_features(grid, advisor = 1)
@@ -200,15 +194,12 @@ def score_samples(grids): #Function to score all samples. Requires trained regre
     features1 = np.array(features1)
     features1[np.isnan(features1)] = 0
     features1 = features1.astype(np.float64)
-
-    for grid in grids:
-        features = compute_features(grid, advisor = 2)
-        features = np.nan_to_num(features, nan = 0)
-        features2.append(features)
-    features2 = np.array(features2)
-    features2[np.isnan(features2)] = 0
-    features2 = features2.astype(np.float64)
-
+   
+    model1 = load_model("model1.h5")
+    preds1 = model1.predict([grids_onehot, features1])
+    if preds1 <0.85:
+        return 0,0,0,0
+    
     for grid in grids:
         features = compute_features(grid, advisor = 3)
         features = np.nan_to_num(features, nan = 0)
@@ -217,17 +208,35 @@ def score_samples(grids): #Function to score all samples. Requires trained regre
     features3[np.isnan(features3)] = 0   
     features3 = features3.astype(np.float64)
     
-    grids_onehot = np.array([one_hot_encode(grid) for grid in grids])
-    grids_onehot = grids_onehot.astype(np.float64)
-
-    model0 = load_model("model0.h5")
-    model1 = load_model("model1.h5")
-    model2 = load_model("model2.h5")
     model3 = load_model("model3.h5")
-    preds0 = model0.predict([grids_onehot, features0])
-    preds1 = model1.predict([grids_onehot, features1])
-    preds2 = model2.predict([grids_onehot, features2])
     preds3 = model3.predict([grids_onehot, features3])
+    if preds3 <0.85:
+        return 0,0,0,0
+    
+    for grid in grids:
+        features = compute_features(grid, advisor = 0)
+        features = np.nan_to_num(features, nan = 0)
+        features0.append(features)
+    features0 = np.array(features0)
+    features0[np.isnan(features0)] = 0
+    features0 = features0.astype(np.float64)
+    model0 = load_model("model0.h5")
+    preds0 = model0.predict([grids_onehot, features0])
+    if preds0 <0.85:
+        return 0,0,0,0
+    
+    for grid in grids:
+        features = compute_features(grid, advisor = 2)
+        features = np.nan_to_num(features, nan = 0)
+        features2.append(features)
+    features2 = np.array(features2)
+    features2[np.isnan(features2)] = 0
+    features2 = features2.astype(np.float64)
+
+    model2 = load_model("model2.h5")
+    preds2 = model2.predict([grids_onehot, features2])
+
+
     return preds0, preds1, preds2, preds3
 
 #Keep fixed for 7x7 grid with 5 district options
@@ -247,12 +256,36 @@ VAE_model = torch.load('VAE_model' + '.pth')
 VAE_model.eval()  # Don't forget to call eval() for inference
 
 num_sample = 1
-generated_samples = sample_from_vae(VAE_model, num_sample, latent_dim) #Sample from VAE
-random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Randomly Sample Grids
+num_accept = 0
 
-preds0, preds1, preds2, preds3 = score_samples(generated_samples)
-rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
+while num_accept < 100:
+    
+    generated_samples = sample_from_vae(VAE_model, num_sample, latent_dim) #Sample from VAE
+    random_samples = np.random.choice(np.arange(5), size = (num_sample,7,7)) #Randomly Sample Grids
 
-print(preds0, preds1, preds2, preds3)
+    preds0, preds1, preds2, preds3 = score_samples(generated_samples)
+    rand_preds0, rand_preds1, rand_preds2, rand_preds3 = score_samples(random_samples)
 
-print(rand_preds0, rand_preds1, rand_preds2, rand_preds3)
+    if preds0 > 0.85 and preds1 > 0.85 and preds2 > 0.80 and preds3 > 0.85:
+        if num_accept == 1:
+            np.save('samples_VAE.npy', generated_samples)     
+        else:
+            loaded_data = np.load('samples_VAE.npy')
+            new_data = np.vstack(loaded_data, generated_samples)
+            np.save('samples_VAE.npy', new_data)
+        num_accept += 1
+
+    print(num_accept, ":", preds0, preds1, preds2, preds3)
+    
+    if rand_preds0 > 0.85 and rand_preds1 > 0.85 and rand_preds2 > 0.80 and rand_preds3 > 0.85:
+        if num_accept == 1:
+            np.save('samples_rand.npy', random_samples)     
+        else:
+            loaded_data = np.load('samples_rand.npy')
+            new_data = np.vstack(loaded_data, random_samples)
+            np.save('samples_rand.npy', new_data)
+        num_accept += 1
+
+    print(num_accept, ":", rand_preds0, rand_preds1, rand_preds2, rand_preds3)
+
+
