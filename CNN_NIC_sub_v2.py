@@ -189,12 +189,12 @@ def find_largest_clusters(grid, num_classes):
 
     return largest_cluster_sizes, centroids, largest_cluster_points
 
-def compute_distance_to_class(grid, target_class):
+def compute_distance_to_class(grid, target_class, large_value = 1000):
     # Find the positions of the target class
     positions_target_class = np.argwhere(grid == target_class)
     
     # Initialize a distance matrix with large values
-    distance_matrix = np.full(grid.shape, np.inf)
+    distance_matrix = np.full(grid.shape, large_value)
     
     for i in range(7):
         for j in range(7):
