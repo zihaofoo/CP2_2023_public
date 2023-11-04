@@ -46,4 +46,4 @@ for i in (0,2):
 
 print(confirm_good.shape)
 
-np.save('Day2_good.npy', grids)
+np.save('Day2_good.npy', confirm_good)
