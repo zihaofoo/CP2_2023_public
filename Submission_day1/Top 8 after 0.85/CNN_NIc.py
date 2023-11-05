@@ -135,7 +135,7 @@ mask_total = mask_total.reshape(len(mask_total))
 #print(grids.shape)
 
 print(grids[mask_total].shape)
-np.savez('grids_filtered_advisor_top_8_below_0.85.npz', grids[mask_total])
+np.save('grids_filtered_advisor_top_8_below_0.85.npy', grids[mask_total])
 all_predictions = grids[mask_total]
 top_eight = all_predictions[0:8,:,:].astype(int)
 print(top_eight.shape)
