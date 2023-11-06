@@ -23,7 +23,7 @@ model0 = get_trained_model(advisor_val = 0, eval_mode = True, seed_number = seed
 # model1 = get_trained_model(advisor_val = 1, eval_mode = True, seed_number = seed_number)
 # model1.save("model1.h5")
 
-model2 = get_trained_model(advisor_val = 2, eval_mode = True, seed_number = seed_number)
+# model2 = get_trained_model(advisor_val = 2, eval_mode = True, seed_number = seed_number)
 # model2.save("model2.h5")
 
 # model3 = get_trained_model(advisor_val = 3, eval_mode = True, seed_number = seed_number)

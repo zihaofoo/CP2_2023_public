@@ -217,6 +217,7 @@ def plot_and_r2(preds_train, preds_test, ratings_train, ratings_test, i):
     plt.ylabel("Predicted Rating")
     plt.title(f"Advisor {i} Predictions")
     plt.legend()
+    plt.savefig('Advisor' + np.str_(i)+ '.png')
     plt.show()
     print(f"Train Set R2 score: {r2_score(ratings_train, preds_train)}") #Calculate R2 score
     print(f"Test Set R2 score: {r2_score(ratings_test, preds_test)}")
@@ -387,7 +388,7 @@ def get_trained_model(advisor_val = 0, eval_mode = False, seed_number = 0):
     # grids_subset = np.vstack((grids_subset, rotated_array1, rotated_array2, rotated_array3))
     # ratings_subset = np.concatenate((ratings_subset, ratings_subset, ratings_subset, ratings_subset))
     # First split: 80% for training, 20% for temp (to be divided into test and validation)
-    grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = 20)
+    grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = seed_number)
     # rotated_array1 = rotate(grids_train, angle=90, axes=(1,2), reshape=True)
     # rotated_array2 = rotate(grids_train, angle=180, axes=(1,2), reshape=True)
     # rotated_array3 = rotate(grids_train, angle=270, axes=(1,2), reshape=True)
@@ -419,7 +420,7 @@ def get_trained_model(advisor_val = 0, eval_mode = False, seed_number = 0):
     model = create_combined_model(advisor = advisor_val)
     model.summary()
     batch_size = 64
-    epochs = 25
+    epochs = 15
     model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
 
     if eval_mode == True:
