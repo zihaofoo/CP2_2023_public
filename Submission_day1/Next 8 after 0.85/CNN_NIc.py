@@ -135,7 +135,7 @@ mask_total = mask_total.reshape(len(mask_total))
 #print(grids.shape)
 
 print(grids[mask_total].shape)
-np.savez('grids_filtered_advisor_top_8_below_0.85.npz', grids[mask_total])
+np.save('grids_filtered_advisor_next_8_below_0.85.npy', grids[mask_total])
 all_predictions = grids[mask_total]
 top_eight = all_predictions[0:8,:,:].astype(int)
 print(top_eight.shape)
@@ -212,5 +212,5 @@ assert final_submission.shape == (100, 7, 7)
 assert final_submission.dtype == int
 assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
 id = np.random.randint(1e8, 1e9-1)
-np.save(f"185857885.npy", final_submission)
+#np.save(f"185857885.npy", final_submission)
 

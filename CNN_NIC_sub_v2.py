@@ -236,56 +236,6 @@ def parallel_compute(grids, advisor):
 # Optimal hyperparameters: {'batch_size': 64, 'conv_layer_size': 171, 'dense_layer_size': 84, 'epochs': 29, 'learning_rate': 0.003837244776335524, 'num_conv_layers': 2, 'num_dense_layers': 4}
 
 
-def create_combined_model(num_conv_layers=3, conv_layer_size=171, num_dense_layers=4, dense_layer_size=84, learning_rate=0.003837244776335524, advisor = 0):
-
-    # Convolutional Branch
-    input_grid = Input(shape=(7, 7, 5))
-    x = input_grid
-    
-    # Add convolutional layers dynamically
-    for _ in range(num_conv_layers):
-        x = Conv2D(conv_layer_size, (3, 3), activation='relu', padding='same')(x)
-
-        
-    x = Flatten()(x)
-    x = Dense(dense_layer_size, activation='relu')(x)
-    conv_branch = Dense(dense_layer_size, activation='relu')(x)
-    
-    # Dense Branch
-    if advisor == 0:
-        input_features = Input(shape=(75,))
-    if advisor == 1:
-        input_features = Input(shape=(25,))
-    if advisor == 2:
-        input_features = Input(shape=(221,))
-    if advisor == 3:
-        input_features = Input(shape=(25,))
-    y = input_features
-    
-    # Add dense layers dynamically
-    for _ in range(num_dense_layers):
-        y = Dense(dense_layer_size, activation='relu')(y)
-        
-    dense_branch = Dense(dense_layer_size, activation='relu')(y)
-    
-    # Combining the two branches
-    combined = concatenate([conv_branch, dense_branch])
-    combined = Dense(dense_layer_size, activation='relu')(combined)
-    combined = Dense(int(dense_layer_size/2), activation='relu')(combined)
-    output = Dense(1)(combined)
-
-    # Use the learning rate in the optimizer
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
-    
-    # Create the model
-    model = Model(inputs=[input_grid, input_features], outputs=output)
-    
-    # Compile the model with the custom optimizer
-    model.compile(optimizer=optimizer, loss='mse')
-   
-    
-    return model
-
 def dfs(grid, row, col, target, visited):
     if (
         0 <= row < len(grid)
@@ -373,6 +323,56 @@ def count_clusters_above_size(grid, target_value, min_size):
     return cluster_count
 
 
+def create_combined_model(num_conv_layers=2, conv_layer_size=171, num_dense_layers=3, dense_layer_size=84, learning_rate=0.003837244776335524, advisor = 0):
+
+    # Convolutional Branch
+    input_grid = Input(shape=(7, 7, 5))
+    x = input_grid
+    
+    # Add convolutional layers dynamically
+    for _ in range(num_conv_layers):
+        x = Conv2D(conv_layer_size, (3, 3), activation='relu', padding='same')(x)
+
+        
+    x = Flatten()(x)
+    x = Dense(dense_layer_size, activation='relu')(x)
+    conv_branch = Dense(dense_layer_size, activation='relu')(x)
+    
+    # Dense Branch
+    if advisor == 0:
+        input_features = Input(shape=(75,))
+    if advisor == 1:
+        input_features = Input(shape=(25,))
+    if advisor == 2:
+        input_features = Input(shape=(221,))
+    if advisor == 3:
+        input_features = Input(shape=(25,))
+    y = input_features
+    
+    # Add dense layers dynamically
+    for _ in range(num_dense_layers):
+        y = Dense(dense_layer_size, activation='relu')(y)
+        
+    dense_branch = Dense(dense_layer_size, activation='relu')(y)
+    
+    # Combining the two branches
+    combined = concatenate([conv_branch, dense_branch])
+    combined = Dense(dense_layer_size, activation='relu')(combined)
+    combined = Dense(int(dense_layer_size/2), activation='relu')(combined)
+    output = Dense(1)(combined)
+
+    # Use the learning rate in the optimizer
+    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    
+    # Create the model
+    model = Model(inputs=[input_grid, input_features], outputs=output)
+    
+    # Compile the model with the custom optimizer
+    model.compile(optimizer=optimizer, loss='mse')
+   
+    
+    return model
+
 def get_trained_model(advisor_val = 0, eval_mode = False, seed_number = 0):
     
     grids = load_grids() # Helper function we have provided to load the grids from the dataset
@@ -387,7 +387,7 @@ def get_trained_model(advisor_val = 0, eval_mode = False, seed_number = 0):
     # grids_subset = np.vstack((grids_subset, rotated_array1, rotated_array2, rotated_array3))
     # ratings_subset = np.concatenate((ratings_subset, ratings_subset, ratings_subset, ratings_subset))
     # First split: 80% for training, 20% for temp (to be divided into test and validation)
-    grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = seed_number)
+    grids_train, grids_test, ratings_train, ratings_test = train_test_split(grids_subset, ratings_subset, test_size = 0.2, random_state = 20)
     # rotated_array1 = rotate(grids_train, angle=90, axes=(1,2), reshape=True)
     # rotated_array2 = rotate(grids_train, angle=180, axes=(1,2), reshape=True)
     # rotated_array3 = rotate(grids_train, angle=270, axes=(1,2), reshape=True)
@@ -419,7 +419,7 @@ def get_trained_model(advisor_val = 0, eval_mode = False, seed_number = 0):
     model = create_combined_model(advisor = advisor_val)
     model.summary()
     batch_size = 64
-    epochs = 15
+    epochs = 25
     model.fit([grids_train, features_train], ratings_train, epochs=epochs, batch_size=batch_size)
 
     if eval_mode == True:

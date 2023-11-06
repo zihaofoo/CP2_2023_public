@@ -107,7 +107,7 @@ preds3 = np.load('preds3.npy')
 threshold = 0.85
 mask0 = preds0 > threshold 
 mask1 = preds1 > threshold 
-mask2 = np.logical_and(preds2 > 0.82, preds2 < 0.85)
+mask2 = np.logical_and(preds2 > 0.81, preds2 < 0.85)
 mask3 = preds3 > threshold 
 mask_total = np.logical_and(mask0, np.logical_and(mask1, np.logical_and(mask2, mask3)))
 
@@ -135,16 +135,16 @@ mask_total = mask_total.reshape(len(mask_total))
 #print(grids.shape)
 
 print(grids[mask_total].shape)
-np.savez('grids_filtered_advisor_top_8_below_0.85.npz', grids[mask_total])
+#np.save('grids_filtered_advisor_top_8_below_0.85.npy', grids[mask_total])
 all_predictions = grids[mask_total]
 top_eight = all_predictions[0:8,:,:].astype(int)
 print(top_eight.shape)
 final_predictions = np.zeros((4,7,7))
 
 
-confirm_good = np.vstack((top_eight[0:1],top_eight[3:]))
-np.save(f"6_confirm_good_185858285.npy", confirm_good)
-print(confirm_good.shape)
+#confirm_good = np.vstack((top_eight[0:1],top_eight[3:]))
+#np.save(f"6_confirm_good_185858285.npy", confirm_good)
+#print(confirm_good.shape)
 
 
 ## # Confirmed 20 invalids, 4 are 7x7 zeros, meaning 7+9 are wrong
