@@ -15,7 +15,7 @@ for i in range(1000000):
     score = diversity_score(final_submission)
     if max_score < score:
         max_score = score
-        print(final_submission.shape)
+        
         print(max_score)
         assert final_submission.shape == (100, 7, 7)
         assert final_submission.dtype == int
