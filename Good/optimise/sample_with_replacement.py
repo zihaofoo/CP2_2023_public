@@ -1,7 +1,7 @@
 import numpy as np
 from utils_public import *
 
-np.random.seed(42)
+# np.random.seed(42)
 ## Import your (n x 7 x 7) tensor here.
 num_sample = 100
 grids_stack = np.load('grids_best_v3.npy')
