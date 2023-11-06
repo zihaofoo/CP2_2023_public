@@ -4,11 +4,11 @@ from utils_public import *
 # np.random.seed(42)
 ## Import your (n x 7 x 7) tensor here.
 num_sample = 100
-grids_stack = np.load('grids_best_v3.npy')
+grids_stack = np.load('grids_best_v4.npy')
 grids_size = grids_stack.shape[0]
 max_score = 0
 ## Get masking of samples. 
-for i in range(1E+13):
+for i in range(100000):
 
     mask = np.random.choice(a = np.arange(start = 0, stop = grids_size, step = 1), size = num_sample, replace = True)
     final_submission = grids_stack[mask].astype(int)

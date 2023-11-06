@@ -17,14 +17,19 @@ import pdb
 #print(original_grids.shape)
 #original_grids = np.vstack((original_grids,np.load('Day3_good.npy'))) # transformation of 6_confirm_good, day 0 assume good and 5 confirm good. minus the last 8
 original_grids = np.load('Day3_good.npy')
+original_grids = np.delete(original_grids,[23],axis=0).astype(int)   
 print(original_grids.shape)
 original_grids = np.vstack((original_grids,np.load('Day3_part2_good.npy')))
 #print(original_grids.shape)
 #original_grids = np.vstack((original_grids,np.load('Day4_good.npy')))
 #print(original_grids.shape)
 
-final_submission = np.delete(original_grids,[87,8,86],axis=0).astype(int)    
 
+final_submission = np.delete(original_grids,[86,8,85],axis=0).astype(int)    
+
+#for i in range(100):
+#    test_submission = np.delete(final_submission,[i],axis=0).astype(int)  
+#    print(i,diversity_score(test_submission))
 
 
 
@@ -58,8 +63,8 @@ print(diversity_score(final_submission))
 # # for i in range(100):
 # #     print(final_submission[i])
 # # pdb.set_trace()
-assert final_submission.shape == (100, 7, 7)
-assert final_submission.dtype == int
-assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
-id = np.random.randint(1e8, 1e9-1)
-np.save(f"333333333.npy", final_submission)
+# assert final_submission.shape == (100, 7, 7)
+# assert final_submission.dtype == int
+# assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
+# id = np.random.randint(1e8, 1e9-1)
+# np.save(f"333333333.npy", final_submission)

@@ -18,27 +18,31 @@ import itertools
 #print(original_grids.shape)
 #original_grids = np.vstack((original_grids,np.load('Day3_good.npy'))) # transformation of 6_confirm_good, day 0 assume good and 5 confirm good. minus the last 8
 original_grids = np.load('Day3_good.npy')
+np.save('bad_data.npy',original_grids[23])
+original_grids = np.delete(original_grids,[23],axis=0)
+
 original_grids = np.vstack((original_grids,np.load('Day3_part2_good.npy'))) # last 8 of day 3
+original_grids = np.delete(original_grids,[85],axis=0)
 original_grids = np.vstack((original_grids,np.load('Day4_good.npy')[0:4]))
 original_grids = np.vstack((original_grids,np.load('Day4_good.npy')[6:7]))
 original_grids = np.vstack((original_grids,np.load('Day2_good.npy')))
 original_grids = np.vstack((original_grids,np.load('Day0_good.npy')[12:17]))
 
-numbers = list(range(124))
-max_score = 0
-combinations = list(itertools.combinations(numbers, 24))
+# numbers = list(range(124))
+# max_score = 0
+# combinations = list(itertools.combinations(numbers, 24))
+# 
+# for i, combo in enumerate(combinations[:1000]):
+#     final_submission = np.delete(original_grids,combo,axis=0).astype(int)
+#     score = diversity_score(final_submission)
+#     if max_score < score:
+#         max_score = score
+#         print(max_score,combo)
+# 
+# 
 
-for i, combo in enumerate(combinations[:1000]):
-    final_submission = np.delete(original_grids,combo,axis=0).astype(int)
-    score = diversity_score(final_submission)
-    if max_score < score:
-        max_score = score
-        print(max_score,combo)
-
-
-
-
-np.save('grids_best_v3.npy', original_grids)
+print(original_grids.shape)
+np.save('grids_best_v4.npy', original_grids)
 
 # Initialize an empty array to store the 80 matrices
 # result_matrices = np.empty((8 * 13, 7, 7), dtype=int)

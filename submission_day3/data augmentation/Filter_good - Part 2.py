@@ -58,6 +58,6 @@ grids = np.load('grids_3288200027.npy')
 for i in (0, 1, 2, 3, 4, 5, 6):
     confirm_good = np.vstack((confirm_good,grids[i:i+1,:,:]))
 print(confirm_good.shape)
-
+pdb.set_trace()
 np.save('Day3_part2_good.npy', confirm_good)
 print(confirm_good.shape)
