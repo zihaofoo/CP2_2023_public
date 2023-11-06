@@ -212,5 +212,5 @@ assert final_submission.shape == (100, 7, 7)
 assert final_submission.dtype == int
 assert np.all(np.greater_equal(final_submission, 0) & np.less_equal(final_submission, 4))
 id = np.random.randint(1e8, 1e9-1)
-np.save(f"185857885.npy", final_submission)
+#np.save(f"185857885.npy", final_submission)
 
